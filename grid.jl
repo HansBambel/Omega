@@ -38,9 +38,7 @@ function printBoard(a::Array)
         # indentation needed for lower half of grid
         indent = "  "
         toShift = Int(max(0, row-(size(a)[1]+1)/2))
-        for i = 0:toShift
-            print(indent)
-        end
+        print(indent ^ toShift) # ^ operator calls repeat function
 
         for val in a[row,:]
             if val == 0
@@ -57,25 +55,12 @@ end
 # https://www.redblobgames.com/grids/hexagons/#map-storage
 # use cube coordinates x, y, z where x+y+z=0
 
-SIZE = 4
+SIZE = 5
 map_radius = SIZE-1
-hexmap = Dict{Tuple{Int, Int}, Int}()
-# NOTE the third coordinate is not necessary
-# need 3 variables ranging from -map_radius to +map_radius where the sum is 0
-for q = -map_radius: map_radius
-    r1 = max(-map_radius, -q - map_radius)
-    r2 = min(map_radius, -q + map_radius)
-    for r = r1:r2
-        # println(q, " ", r)
-        hexmap[(q,r)] = 0
-    end
-end
-# println(hexmap)
-hexmap[(0, 0)] = 1
-# Save as array?
-hexarray = zeros(Int8, 2*SIZE-1,2*SIZE-1)
-let
-    global q_shift = map_radius
+
+function initializeGrid(gridSize::Int)
+    hexarray = zeros(Int8, 2*gridSize-1,2*gridSize-1)
+    q_shift = gridSize-1
     for row in range(1, stop=size(hexarray)[1])
         # print(q_shift)
         for col = max(1, q_shift+1):min(length(hexarray[row, :]),length(hexarray[row, :])+q_shift)
@@ -84,10 +69,11 @@ let
         q_shift = q_shift - 1
     end
     # println(length(size(hexarray)))
+    return hexarray
 end
 
-printArray(hexarray)
+hexgrid = initializeGrid(5)
+hexgrid[5, 5] = 5
+printArray(hexgrid)
 
-
-
-printBoard(hexarray)
+printBoard(hexgrid)

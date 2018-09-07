@@ -3,12 +3,12 @@ import Base:convert
 # Create a hexagonal grid of size SIZE
 # https://github.com/GiovineItalia/Hexagons.jl/blob/master/src/Hexagons.jl
 
-struct HexagonAxial# <: Hexagon
+struct HexagonAxial
     q::Int
     r::Int
 end
 
-struct HexagonCubic# <: Hexagon
+struct HexagonCubic
     x::Int
     y::Int
     z::Int
@@ -33,8 +33,8 @@ function printArray(a)
 end
 
 function printBoard(a::Array)
-
     for row = 1:size(a)[1]
+        print(row, ": ")
         # indentation needed for lower half of grid
         indent = "  "
         toShift = Int(max(0, row-(size(a)[1]+1)/2))
@@ -51,13 +51,7 @@ function printBoard(a::Array)
     end
 end
 
-##### Initializing #####
-# https://www.redblobgames.com/grids/hexagons/#map-storage
-# use cube coordinates x, y, z where x+y+z=0
-
-SIZE = 5
-map_radius = SIZE-1
-
+# The grid is saved as an array with default value 0. The allowed hexagons are where a 1 is.
 function initializeGrid(gridSize::Int)
     hexarray = zeros(Int8, 2*gridSize-1,2*gridSize-1)
     q_shift = gridSize-1
@@ -72,8 +66,50 @@ function initializeGrid(gridSize::Int)
     return hexarray
 end
 
+# getter for getting value of hexgrid
+function getGridValue(grid::Array, row::Int, col::Int)
+    @assert row >= 0 "row can't be smaller than 0"
+    @assert col >= 0 "col can't be smaller than 0"
+    offset = Int((size(grid)[1]-1)/2)
+    # if something is asked that is outside the grid
+    if (row > size(grid)[1]) || (col > size(grid)[2]) || (row == 0) || (col == 0)
+        return 0
+    elseif col+max(0, offset-(row-1)) > size(grid)[2]
+        return 0
+    else
+        return grid[row, col+max(0, offset-(row-1))]
+    end
+end
+
+# set function for the grid
+function setGridValue!(grid::Array, row::Int, col::Int, value)
+    @assert row >= 0 "row can't be smaller than 0"
+    @assert col >= 0 "col can't be smaller than 0"
+    offset = Int((size(grid)[1]-1)/2)
+    # if something is asked that is outside the grid
+    if (row > size(grid)[1]) || (col > size(grid)[2]) || (row == 0) || (col == 0)
+        return 0
+    elseif col+max(0, offset-(row-1)) > size(grid)[2]
+        return 0
+    else
+        grid[row, col+max(0, offset-(row-1))] = value
+        return grid
+    end
+end
+
+
+##### Initializing #####
+SIZE = 4
+
 hexgrid = initializeGrid(5)
 hexgrid[5, 5] = 5
+hexgrid[9, 5] = 6
+hexgrid[5, 8] = 7
+hexgrid[6, 8] = 7
 printArray(hexgrid)
-
 printBoard(hexgrid)
+
+getGridValue(hexgrid, 1, 1)
+
+setGridValue!(hexgrid, 1, 1, 4)
+getGridValue(hexgrid, 1, 1)

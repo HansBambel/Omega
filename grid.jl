@@ -97,8 +97,23 @@ function setGridValue!(grid::Array, row::Int, col::Int, value)
     end
 end
 
+function countNum(pred::Int, a::Array)
+    n = 0
+    for i in eachindex(a)
+        @inbounds n += pred == a[i]
+    end
+    return n
+end
+
+# check whether another round can be played
+function gameOver(hexgrid::Array, players::Int)
+    freeHexagons = countNum(1, hexgrid)
+    # println("Free hexes: ", freeHexagons, " needed Moves: ", players^2)
+    return freeHexagons < players^2
+end
 
 ##### Initializing #####
+PLAYERS = 2
 SIZE = 4
 
 hexgrid = initializeGrid(5)
@@ -113,3 +128,5 @@ getGridValue(hexgrid, 1, 1)
 
 setGridValue!(hexgrid, 1, 1, 4)
 getGridValue(hexgrid, 1, 1)
+
+gameOver(hexgrid, 7)

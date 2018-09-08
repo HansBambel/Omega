@@ -97,6 +97,7 @@ function setGridValue!(grid::Array, row::Int, col::Int, value)
     end
 end
 
+# useful function to count occurences of a number in array
 function countNum(pred::Int, a::Array)
     n = 0
     for i in eachindex(a)
@@ -113,9 +114,12 @@ function gameOver(hexgrid::Array, players::Int)
 end
 
 ##### Initializing #####
-PLAYERS = 2
-SIZE = 4
 
+# TODO: add these when user input required
+# print(" How big shall the grid be? Number between 5-10: ")
+# gridSize = parse(Int, chomp(readline()))
+# print(" How many players? ")
+# players = parse(Int, chomp(readline()))
 hexgrid = initializeGrid(5)
 hexgrid[5, 5] = 5
 hexgrid[9, 5] = 6

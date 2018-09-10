@@ -43,6 +43,14 @@ function printBoard(a::Array)
         for val in a[row,:]
             if val == 0
                 print(indent)
+            elseif val==2
+                print(" W", indent)
+            elseif val==3
+                print(" B", indent)
+            elseif val==4
+                print(" R", indent)
+            elseif val==5
+                print(" G", indent)
             else
                 print(" ", val, indent)
             end
@@ -113,6 +121,22 @@ function gameOver(hexgrid::Array, players::Int)
     return freeHexagons < players^2
 end
 
+function neighbors(grid:: Array, row::Int, col::Int)
+    offset = Int((size(grid)[1]+1)/2)
+    # The order is the following: left, right, top left, top right, bottom left, bottom right
+    IMMEDIATE_NEIGHBORS = [[ 0, -1],                    # left
+                           [ 0,  1],                    # right
+                           [-1, -1*Int(row <= offset)], # top left
+                           [-1,  1*Int(row > offset)],  # top right
+                           [ 1, -1*Int(row >= offset)], # bottom left
+                           [ 1,  1*Int(row < offset)]]  # bottom right
+    # println("Hex: ", row, " ", col)
+    # for n in IMMEDIATE_NEIGHBORS
+    #     println("Neighbor ", " [", row+n[1],", ", col+n[2], "]")
+    # end
+    return [[row+n[1], col+n[2]] for n in IMMEDIATE_NEIGHBORS]
+end
+
 ##### Initializing #####
 
 # TODO: add these when user input required
@@ -121,16 +145,16 @@ end
 # print(" How many players? ")
 # players = parse(Int, chomp(readline()))
 hexgrid = initializeGrid(5)
-hexgrid[5, 5] = 5
-hexgrid[9, 5] = 6
-hexgrid[5, 8] = 7
-hexgrid[6, 8] = 7
+hexgrid[5, 5] = 2
+hexgrid[5, 6] = 2
+hexgrid[9, 5] = 3
+hexgrid[5, 8] = 4
+hexgrid[6, 8] = 5
 printArray(hexgrid)
 printBoard(hexgrid)
 
 getGridValue(hexgrid, 1, 1)
 
-setGridValue!(hexgrid, 1, 1, 4)
-getGridValue(hexgrid, 1, 1)
-
 gameOver(hexgrid, 7)
+
+print(neighbors(hexgrid, 4, 4))

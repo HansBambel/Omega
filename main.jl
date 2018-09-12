@@ -1,7 +1,8 @@
 include("grid.jl")
 include("humanPlayer.jl")
 
-const global PLAYERCOLORS = ["W", "B", "R", "G"]
+# https://unicode-table.com/en/
+const global PLAYERCOLORS = ["\U2715", "\U25B3", "\U26C4", "\U2661"]
 players = 2
 gridSize = 4
 print(" How big shall the grid be? Should be between 5-10: ")
@@ -36,16 +37,20 @@ printBoard(hexgrid)
 # NOTE AI needs to know which player it is (2, 3, 4, 5) to maximize
 while(!gameOver(hexgrid, players))
     # each player after the other
-    # Player 1 Turn
-    println("####   TURN: PLAYER 1   ####")
-    makeTurn(hexgrid, players)
-    # print current board --> moved to players
-    # Player 2 Turn
-    println("####   TURN: PLAYER 2   ####")
-    makeTurn(hexgrid, players)
-    # print current board
+    turn = 0
+    for p in 1:players
+        turn += 1
+        # Player 1 Turn
+        println("####   TURN ", turn, ": PLAYER ", PLAYERCOLORS[p], "   ####")
+        makeTurn(hexgrid, players)
+        # print current board --> moved to players
+        # # Player 2 Turn
+        # println("####   TURN: PLAYER 2   ####")
+        # makeTurn(hexgrid, players)
+        # # print current board
+    end
 end
-
+println("### Game ended ###")
 scores = calculateScores(hexgrid)
 println("Scores: ")
 for p in 1:players

@@ -6,7 +6,7 @@ function makeTurn(grid::Array, players::Int)
         row, col = 0, 0
         while true
             # ASK player row + col
-            println("Where should a hex of player ", PLAYERCOLORS[p], " be put? (Format: row, col or row col) ")
+            println("Where should a stone of player ", PLAYERCOLORS[p], " be put? (Format: row, col or row col) ")
             humanInput = chomp(readline())
             try
                 row, col = parse(Int, split(humanInput)[1]), parse(Int, split(humanInput)[end])

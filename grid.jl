@@ -23,7 +23,8 @@ function printBoard(a::Array)
             elseif val>=2 && val <=5
                 print(" ", PLAYERCOLORS[val-1], indent)
             else
-                print(" ", val, indent)
+                # Free field (used to be val)
+                print(" ", "\U2B23", indent)
             end
         end
         println()

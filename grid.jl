@@ -1,5 +1,7 @@
 import Base:convert
 
+using Printf
+
 # Create a hexagonal grid of size SIZE
 # https://github.com/GiovineItalia/Hexagons.jl/blob/master/src/Hexagons.jl
 
@@ -34,7 +36,7 @@ end
 
 function printBoard(a::Array)
     for row = 1:size(a)[1]
-        print(row, ": ")
+        @printf("%2.0f : ", row)
         # indentation needed for lower half of grid
         indent = "  "
         toShift = Int(max(0, row-(size(a)[1]+1)/2))
@@ -144,12 +146,13 @@ end
 # gridSize = parse(Int, chomp(readline()))
 # print(" How many players? ")
 # players = parse(Int, chomp(readline()))
-hexgrid = initializeGrid(5)
-hexgrid[5, 5] = 2
-hexgrid[5, 6] = 2
-hexgrid[9, 5] = 3
-hexgrid[5, 8] = 4
-hexgrid[6, 8] = 5
+hexgrid = initializeGrid(10)
+# hexgrid[5, 5] = 2
+# hexgrid[5, 6] = 2
+# hexgrid[9, 5] = 3
+# hexgrid[5, 8] = 4
+# hexgrid[6, 8] = 5
+setGridValue!(hexgrid, 7, 7, 2)
 printArray(hexgrid)
 printBoard(hexgrid)
 

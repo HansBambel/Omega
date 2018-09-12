@@ -123,7 +123,7 @@ function gameOver(hexgrid::Array, players::Int)
     return freeHexagons < players^2
 end
 
-function neighbors(grid:: Array, row::Int, col::Int)
+function getNeighbors(grid:: Array, row::Int, col::Int)
     offset = Int((size(grid)[1]+1)/2)
     # The order is the following: left, right, top left, top right, bottom left, bottom right
     IMMEDIATE_NEIGHBORS = [[ 0, -1],                    # left
@@ -139,6 +139,45 @@ function neighbors(grid:: Array, row::Int, col::Int)
     return [[row+n[1], col+n[2]] for n in IMMEDIATE_NEIGHBORS]
 end
 
+function calculateScores(hexgrid::Array)
+    scores = [1, 1, 1, 1]
+    # create a copy of the current grid and check groups
+    gridSize = size(hexgrid)[1]
+    for player = 2:5
+        grid = copy(hexgrid)
+        for row = 1:gridSize
+            for col = 1:gridSize
+                gridValue = getGridValue(grid, row, col)
+                if gridValue == 0
+                    break
+                elseif gridValue == player
+                    scores[player-1] *= checkGroup(grid, row, col, player)
+                    # check if neighbors belong to same group and make this field free
+                end
+            end
+        end
+    end
+    return scores
+end
+
+function checkGroup(hexgrid::Array, row, col, value)
+    # if the new field is not of the same player --> stop
+    if getGridValue(hexgrid, row, col) != value
+        return 0
+    else # otherwise set it free and look whether there are more belonging to the group
+        # TODO check whether calculations are still correct in big groups
+        # --> may overwrite each other
+        # grid = copy(hexgrid)
+        setGridValue!(hexgrid, row, col, 1)
+        groupSize = 0
+        neighbors = getNeighbors(hexgrid, row, col)
+        for n in neighbors
+            groupSize += checkGroup(hexgrid, n[1], n[2], value)
+        end
+        return 1 + groupSize
+    end
+end
+
 ##### Initializing #####
 
 # TODO: add these when user input required
@@ -146,18 +185,29 @@ end
 # gridSize = parse(Int, chomp(readline()))
 # print(" How many players? ")
 # players = parse(Int, chomp(readline()))
-hexgrid = initializeGrid(10)
-# hexgrid[5, 5] = 2
-# hexgrid[5, 6] = 2
+hexgrid = initializeGrid(5)
+setGridValue!(hexgrid, 7, 7, 2)
+setGridValue!(hexgrid, 3, 4, 2)
+setGridValue!(hexgrid, 4, 4, 2)
+setGridValue!(hexgrid, 4, 5, 2)
+setGridValue!(hexgrid, 5, 5, 2)
+setGridValue!(hexgrid, 7, 6, 2)
+setGridValue!(hexgrid, 8, 6, 2)
+
+setGridValue!(hexgrid, 5, 1, 3)
+setGridValue!(hexgrid, 5, 2, 3)
+setGridValue!(hexgrid, 5, 3, 3)
+setGridValue!(hexgrid, 6, 7, 3)
+setGridValue!(hexgrid, 6, 8, 3)
+setGridValue!(hexgrid, 2, 3, 3)
+setGridValue!(hexgrid, 1, 3, 3)
+setGridValue!(hexgrid, 1, 2, 3)
 # hexgrid[9, 5] = 3
 # hexgrid[5, 8] = 4
 # hexgrid[6, 8] = 5
-setGridValue!(hexgrid, 7, 7, 2)
-printArray(hexgrid)
+# printArray(hexgrid)
 printBoard(hexgrid)
 
-getGridValue(hexgrid, 1, 1)
+# println(checkGroup(hexgrid, 5, 5, 2))
 
-gameOver(hexgrid, 7)
-
-print(neighbors(hexgrid, 4, 4))
+println(calculateScores(hexgrid))

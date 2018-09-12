@@ -2,32 +2,6 @@ import Base:convert
 
 using Printf
 
-# Create a hexagonal grid of size SIZE
-# https://github.com/GiovineItalia/Hexagons.jl/blob/master/src/Hexagons.jl
-
-struct HexagonAxial
-    q::Int
-    r::Int
-end
-
-struct HexagonCubic
-    x::Int
-    y::Int
-    z::Int
-end
-# Constructors
-hexagon(x::Int, y::Int, z::Int) = HexagonCubic(x, y, z)
-hexagon(q::Int, r::Int) = HexagonAxial(q, r)
-
-# Conversions
-function convert(::Type{HexagonAxial}, hex::HexagonCubic)
-    HexagonAxial(hex.x, hex.z)
-end
-
-function convert(::Type{HexagonCubic}, hex::HexagonAxial)
-    HexagonCubic(hex.q, hex.r, -hex.q - hex.r)
-end
-
 function printArray(a)
     for row = 1:size(a)[1]
         println(a[row,:])
@@ -35,6 +9,7 @@ function printArray(a)
 end
 
 function printBoard(a::Array)
+    # PLAYERCOLORS = ["W", "B", "R", "G"]
     for row = 1:size(a)[1]
         @printf("%2.0f : ", row)
         # indentation needed for lower half of grid
@@ -45,14 +20,8 @@ function printBoard(a::Array)
         for val in a[row,:]
             if val == 0
                 print(indent)
-            elseif val==2
-                print(" W", indent)
-            elseif val==3
-                print(" B", indent)
-            elseif val==4
-                print(" R", indent)
-            elseif val==5
-                print(" G", indent)
+            elseif val>=2 && val <=5
+                print(" ", PLAYERCOLORS[val-1], indent)
             else
                 print(" ", val, indent)
             end
@@ -160,6 +129,8 @@ function calculateScores(hexgrid::Array)
     return scores
 end
 
+# calculates the size of the group of the value
+# NOTE: THIS CHANGES THE GIVEN ARRAY!!!
 function checkGroup(hexgrid::Array, row, col, value)
     # if the new field is not of the same player --> stop
     if getGridValue(hexgrid, row, col) != value
@@ -185,29 +156,29 @@ end
 # gridSize = parse(Int, chomp(readline()))
 # print(" How many players? ")
 # players = parse(Int, chomp(readline()))
-hexgrid = initializeGrid(5)
-setGridValue!(hexgrid, 7, 7, 2)
-setGridValue!(hexgrid, 3, 4, 2)
-setGridValue!(hexgrid, 4, 4, 2)
-setGridValue!(hexgrid, 4, 5, 2)
-setGridValue!(hexgrid, 5, 5, 2)
-setGridValue!(hexgrid, 7, 6, 2)
-setGridValue!(hexgrid, 8, 6, 2)
-
-setGridValue!(hexgrid, 5, 1, 3)
-setGridValue!(hexgrid, 5, 2, 3)
-setGridValue!(hexgrid, 5, 3, 3)
-setGridValue!(hexgrid, 6, 7, 3)
-setGridValue!(hexgrid, 6, 8, 3)
-setGridValue!(hexgrid, 2, 3, 3)
-setGridValue!(hexgrid, 1, 3, 3)
-setGridValue!(hexgrid, 1, 2, 3)
-# hexgrid[9, 5] = 3
-# hexgrid[5, 8] = 4
-# hexgrid[6, 8] = 5
-# printArray(hexgrid)
-printBoard(hexgrid)
-
-# println(checkGroup(hexgrid, 5, 5, 2))
-
-println(calculateScores(hexgrid))
+# hexgrid = initializeGrid(5)
+# setGridValue!(hexgrid, 7, 7, 2)
+# setGridValue!(hexgrid, 3, 4, 2)
+# setGridValue!(hexgrid, 4, 4, 2)
+# setGridValue!(hexgrid, 4, 5, 2)
+# setGridValue!(hexgrid, 5, 5, 2)
+# setGridValue!(hexgrid, 7, 6, 2)
+# setGridValue!(hexgrid, 8, 6, 2)
+#
+# setGridValue!(hexgrid, 5, 1, 3)
+# setGridValue!(hexgrid, 5, 2, 3)
+# setGridValue!(hexgrid, 5, 3, 3)
+# setGridValue!(hexgrid, 6, 7, 3)
+# setGridValue!(hexgrid, 6, 8, 3)
+# setGridValue!(hexgrid, 2, 3, 3)
+# setGridValue!(hexgrid, 1, 3, 3)
+# setGridValue!(hexgrid, 1, 2, 3)
+# # hexgrid[9, 5] = 3
+# # hexgrid[5, 8] = 4
+# # hexgrid[6, 8] = 5
+# # printArray(hexgrid)
+# printBoard(hexgrid)
+#
+# # println(checkGroup(hexgrid, 5, 5, 2))
+#
+# println(calculateScores(hexgrid))

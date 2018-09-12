@@ -1,5 +1,6 @@
 include("grid.jl")
 include("humanPlayer.jl")
+include("randomPlayer.jl")
 
 # https://unicode-table.com/en/
 const global PLAYERCOLORS = ["\U2715", "\U25B3", "\U26C4", "\U2661"]
@@ -42,7 +43,11 @@ while(!gameOver(hexgrid, players))
         turn += 1
         # Player 1 Turn
         println("####   TURN ", turn, ": PLAYER ", PLAYERCOLORS[p], "   ####")
-        makeTurn(hexgrid, players)
+        # if p == 1
+        #     makeTurn(hexgrid, players)
+        # else
+        makeRandomTurn(hexgrid, players)
+        # end
         # print current board --> moved to players
         # # Player 2 Turn
         # println("####   TURN: PLAYER 2   ####")

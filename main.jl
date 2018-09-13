@@ -44,11 +44,11 @@ printBoard(hexgrid)
 
 # TODO ask whether human goes first or second
 # NOTE AI needs to know which player it is (2, 3, 4, 5) to maximize
+turn = 0
 while(!gameOver(hexgrid, players))
     # each player after the other
-    turn = 0
     for p in 1:players
-        turn += 1
+        global turn += 1
         # Player 1 Turn
         println("####   TURN ", turn, ": PLAYER ", PLAYERCOLORS[p], "   ####")
         # if p == 1

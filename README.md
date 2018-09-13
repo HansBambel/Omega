@@ -6,7 +6,6 @@
 - type "using Pkg" <--- this is the package installer for Julia
 - install the following packages using Pkg.add("\<packagename\>")
   - Printf
-  - StatsBase
 - exit julia (Ctrl + D)
 - Switch to the Omega folder
 - run "julia main.jl" and play Omega

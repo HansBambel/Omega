@@ -6,10 +6,19 @@ include("randomPlayer.jl")
 const global PLAYERCOLORS = ["\U2715", "\U25B3", "\U26C4", "\U2661"]
 players = 2
 gridSize = 4
-print(" How big shall the grid be? Should be between 5-10: ")
-gridSize = parse(Int, chomp(readline()))
-# print(" How many players? ")
-# players = parse(Int, chomp(readline()))
+if length(ARGS) == 0
+    print(" How big shall the grid be? Should be between 5-10: ")
+    gridSize = parse(Int, chomp(readline()))
+    # print(" How many players? ")
+    # players = parse(Int, chomp(readline()))
+elseif length(ARGS) == 1
+    gridSize = parse(Int, ARGS[1])
+    print(" How many players? ")
+    players = parse(Int, chomp(readline()))
+elseif length(ARGS) == 2
+    gridSize = parse(Int, ARGS[1])
+    players = parse(Int, ARGS[2])
+end
 
 hexgrid = initializeGrid(gridSize)
 # setGridValue!(hexgrid, 7, 7, 2)
@@ -32,7 +41,6 @@ hexgrid = initializeGrid(gridSize)
 # printArray(hexgrid)
 
 printBoard(hexgrid)
-# println("Scores: ", calculateScores(hexgrid))
 
 # TODO ask whether human goes first or second
 # NOTE AI needs to know which player it is (2, 3, 4, 5) to maximize

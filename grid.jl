@@ -149,37 +149,3 @@ function checkGroup(hexgrid::Array, row, col, value)
         return 1 + groupSize
     end
 end
-
-##### Initializing #####
-
-# TODO: add these when user input required
-# print(" How big shall the grid be? Number between 5-10: ")
-# gridSize = parse(Int, chomp(readline()))
-# print(" How many players? ")
-# players = parse(Int, chomp(readline()))
-# hexgrid = initializeGrid(5)
-# setGridValue!(hexgrid, 7, 7, 2)
-# setGridValue!(hexgrid, 3, 4, 2)
-# setGridValue!(hexgrid, 4, 4, 2)
-# setGridValue!(hexgrid, 4, 5, 2)
-# setGridValue!(hexgrid, 5, 5, 2)
-# setGridValue!(hexgrid, 7, 6, 2)
-# setGridValue!(hexgrid, 8, 6, 2)
-#
-# setGridValue!(hexgrid, 5, 1, 3)
-# setGridValue!(hexgrid, 5, 2, 3)
-# setGridValue!(hexgrid, 5, 3, 3)
-# setGridValue!(hexgrid, 6, 7, 3)
-# setGridValue!(hexgrid, 6, 8, 3)
-# setGridValue!(hexgrid, 2, 3, 3)
-# setGridValue!(hexgrid, 1, 3, 3)
-# setGridValue!(hexgrid, 1, 2, 3)
-# # hexgrid[9, 5] = 3
-# # hexgrid[5, 8] = 4
-# # hexgrid[6, 8] = 5
-# # printArray(hexgrid)
-# printBoard(hexgrid)
-#
-# # println(checkGroup(hexgrid, 5, 5, 2))
-#
-# println(calculateScores(hexgrid))

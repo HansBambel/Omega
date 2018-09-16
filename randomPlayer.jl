@@ -18,18 +18,3 @@ function makeRandomTurn(grid::Array, players::Int)
     printBoard(grid)
 
 end
-
-function possibleMoves(hexgrid::Array)
-    moves = []
-    for row = 1:size(hexgrid)[1]
-        for col = 1:size(hexgrid)[1]
-            value = getGridValue(hexgrid, row, col)
-            if value == 0
-                break
-            elseif value == 1
-                push!(moves, [row col])
-            end
-        end
-    end
-    return moves
-end

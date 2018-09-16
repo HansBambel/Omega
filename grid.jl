@@ -93,6 +93,21 @@ function gameOver(hexgrid::Array, players::Int)
     return freeHexagons < players^2
 end
 
+function possibleMoves(hexgrid::Array)
+    moves = []
+    for row = 1:size(hexgrid)[1]
+        for col = 1:size(hexgrid)[1]
+            value = getGridValue(hexgrid, row, col)
+            if value == 0
+                break
+            elseif value == 1
+                push!(moves, [row col])
+            end
+        end
+    end
+    return moves
+end
+
 function getNeighbors(grid:: Array, row::Int, col::Int)
     offset = Int((size(grid)[1]+1)/2)
     # The order is the following: left, right, top left, top right, bottom left, bottom right

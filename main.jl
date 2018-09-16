@@ -3,6 +3,8 @@ include("humanPlayer.jl")
 include("randomPlayer.jl")
 
 # https://unicode-table.com/en/
+
+# const global PLAYERCOLORS = ["W", "B", "R", "G"]
 const global PLAYERCOLORS = ["\U2715", "\U25B3", "\U26C4", "\U2661"]
 players = 2
 gridSize = 4
@@ -21,24 +23,6 @@ elseif length(ARGS) == 2
 end
 
 hexgrid = initializeGrid(gridSize)
-# setGridValue!(hexgrid, 7, 7, 2)
-# setGridValue!(hexgrid, 3, 4, 2)
-# setGridValue!(hexgrid, 4, 4, 2)
-# setGridValue!(hexgrid, 4, 5, 2)
-# setGridValue!(hexgrid, 5, 5, 2)
-# setGridValue!(hexgrid, 7, 6, 2)
-# setGridValue!(hexgrid, 8, 6, 2)
-# setGridValue!(hexgrid, 9, 1, 2)
-#
-# setGridValue!(hexgrid, 5, 1, 3)
-# setGridValue!(hexgrid, 5, 2, 3)
-# setGridValue!(hexgrid, 5, 3, 3)
-# setGridValue!(hexgrid, 6, 7, 3)
-# setGridValue!(hexgrid, 6, 8, 3)
-# setGridValue!(hexgrid, 2, 3, 3)
-# setGridValue!(hexgrid, 1, 3, 3)
-# setGridValue!(hexgrid, 1, 2, 3)
-# printArray(hexgrid)
 
 printBoard(hexgrid)
 

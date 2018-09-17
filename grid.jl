@@ -127,11 +127,11 @@ function getNeighbors(grid:: Array, row::Int, col::Int)
 end
 
 
-function calculateScores(hexgrid::Array)
+function calculateScores(hexgrid::Array, numPlayers)
     scores = [1, 1, 1, 1]
     # create a copy of the current grid and check groups
     gridSize = size(hexgrid)[1]
-    for player = 2:5
+    for player = 2:numPlayers+1
         grid = copy(hexgrid)
         for row = 1:gridSize
             for col = 1:gridSize

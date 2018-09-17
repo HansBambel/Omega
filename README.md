@@ -7,6 +7,7 @@
 - install the following packages using Pkg.add("\<packagename\>")
   - Printf
   - IterTools
+  - ProgressMeter
 - exit julia (Ctrl + D)
 - Switch to the Omega folder
 - run "julia main.jl" and play Omega

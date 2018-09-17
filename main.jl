@@ -25,6 +25,8 @@ end
 hexgrid = initializeGrid(gridSize)
 
 printBoard(hexgrid)
+# totalTurns = (countNum(1, hexgrid)-1) / players
+totalTurns = countNum(1, hexgrid) / players
 
 # TODO ask whether human goes first or second
 # NOTE AI needs to know which player it is (2, 3, 4, 5) to maximize
@@ -47,6 +49,7 @@ while(!gameOver(hexgrid, players))
         # # print current board
     end
 end
+println("Calculated TOTAL_TURNS: ", totalTurns)
 println("### Game ended ###")
 scores = calculateScores(hexgrid)
 println("Scores: ")

@@ -14,14 +14,15 @@ function makeSmartTurn(grid::Array, player::Int, timeLeft::Float64)
     # what moves are available
     posMoves = possibleMoves(grid)
 
-    global maxDepth = 1
+    global maxDepth = 3
     timeElapsed = 0.0
     while timeElapsed < timeLeft
         # do alpha-beta-search
         # TODO maybe time after - time now is better
+        println("Depth: ", maxDepth)
         bestTurn, time, memory, _, _ = @timed alphaBeta(grid, player, maxDepth)
         timeElapsed += time
-        println("Time at depth ", maxDepth, ": ", time, "s; memory used: ", memory/1024, " kbytes")
+        println("Time: ", time, "s; memory used: ", memory/1024, " kbytes")
         global maxDepth += 1
     end
     println("MaxDepth = ", maxDepth-1)
@@ -34,28 +35,30 @@ end
 # returns the best turn
 function alphaBeta(grid::Array, player::Int, maxDepth::Int)
     # do a copy of the grid and run alphaBetaSearch on it
+    print("init a-b with maxdepth = ", maxDepth)
     copiedGrid = copy(grid)
     posMoves = possibleMoves(copiedGrid)
     # permutates the possible moves --> creates all possible turns
     posTurns = subsets(posMoves, 2)
+    println(" possible Turns: ", length(posTurns))
     # TODO TurnOrdering here
     # for all possible TURNS: execute them all. (turn = 2 moves)
-    global bestTurn = [posMoves[1], posMoves[2]]
-    global bestValue = -Inf
-    global bestAlpha = -Inf
-    global bestBeta = Inf
+    bestTurn = [posMoves[1], posMoves[2]]
+    bestValue = -Inf
+    bestAlpha = -Inf
+    bestBeta = Inf
     # println("Possible turns at depth ", maxDepth, ": ", length(posTurns))
     @showprogress 1 "Alpha-Beta-Searching... " for turn in posTurns
         # execute moves
         setGridValue!(copiedGrid, turn[1][1], turn[1][2], 2)
         setGridValue!(copiedGrid, turn[2][1], turn[2][2], 3)
-
         # Initial call of search
         newValue = alphaBetaSearch(copiedGrid, player, bestAlpha, bestBeta, maxDepth)
-        global bestValue = max(bestValue, newValue)
-        if bestValue == newValue
-            global bestTurn = turn
+        if newValue > bestValue
+            bestTurn = turn
+            println("Found better turn: ", bestTurn)
         end
+        bestValue = max(bestValue, newValue)
         bestAlpha = max(bestAlpha, bestValue)
         # prune --> no need to look at the other children
         if bestAlpha >= bestBeta
@@ -68,13 +71,16 @@ function alphaBeta(grid::Array, player::Int, maxDepth::Int)
         setGridValue!(copiedGrid, turn[1][1], turn[1][2], 1)
         setGridValue!(copiedGrid, turn[2][1], turn[2][2], 1)
     end
+    # TODO HE CANT FIND THIS VARIABLE
     return bestTurn
 end
 
 # returns best value in subtree
 function alphaBetaSearch(grid::Array, player::Int, alpha::Float64, beta::Float64, depth::Int)
     # if in terminal state
+    # println("started search on depth: ", depth)
     otherPlayer = player == 2 ? 3 : 2
+    value = -Inf
     if gameOver(grid, 2)
         scores = calculateScores(grid, 2)
         return scores[player]-scores[otherPlayer]
@@ -83,8 +89,9 @@ function alphaBetaSearch(grid::Array, player::Int, alpha::Float64, beta::Float64
     elseif depth <= 0
         # TODO come up with a good heuristic
         #
-        scores = calculateScores(grid, 2)
-        return scores[player]-scores[otherPlayer]
+        return 0
+        # scores = calculateScores(grid, 2)
+        # return scores[player]-scores[otherPlayer]
         # return a heuristic-value ("AN ADMISSABLE HEURISTIC NEVER OVERESTIMATES!" - Helmar Gust)
     # continue searching
     else
@@ -95,12 +102,13 @@ function alphaBetaSearch(grid::Array, player::Int, alpha::Float64, beta::Float64
         # TODO TurnOrdering here
         # for all possible TURNS: execute them all. (turn = 2 moves)
         # NOTE maybe put these before if
-        value = -Inf
+
         for turn in posTurns
             # execute the two moves
             setGridValue!(grid, turn[1][1], turn[1][2], 2)
             setGridValue!(grid, turn[2][1], turn[2][2], 3)
-
+            # println("Depth: ", depth, " Value: ", value)
+            # println("otherPlayer ", otherPlayer)
             # do deeper search there
             value = max(value, alphaBetaSearch(grid, otherPlayer, -beta, -alpha, depth-1))
             alpha = max(alpha, value)

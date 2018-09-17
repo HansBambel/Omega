@@ -94,7 +94,7 @@ function gameOver(hexgrid::Array, players::Int)
 end
 
 # list all possible moves
-# NOTE maybe make this array from the beginning at remove the made move
+# NOTE maybe make this array from the beginning and remove the made move
 function possibleMoves(hexgrid::Array)
     moves = []
     for row = 1:size(hexgrid)[1]

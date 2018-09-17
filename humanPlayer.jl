@@ -6,6 +6,7 @@ function makeTurn(grid::Array, players::Int)
         row, col = 0, 0
         while true
             # ASK player row + col
+            # TODO if player enter "undo" (or something) UNDO last move
             println("Where should a stone of player ", PLAYERCOLORS[p], " be put? (Format: row, col or row col) ")
             humanInput = chomp(readline())
             try

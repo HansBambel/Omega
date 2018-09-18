@@ -88,8 +88,8 @@ function alphaBetaSearch(grid::Array, player::Int, alpha::Float64, beta::Float64
     # not yet finished, but max search depth
     elseif depth <= 0
         # TODO come up with a good heuristic
-        #
-        return 0
+        approximation = heuristic(grid)
+        return approximation[otherPlayer] - approximation[player]
         # scores = calculateScores(grid, 2)
         # return scores[player]-scores[otherPlayer]
         # return a heuristic-value ("AN ADMISSABLE HEURISTIC NEVER OVERESTIMATES!" - Helmar Gust)

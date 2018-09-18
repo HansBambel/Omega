@@ -169,11 +169,11 @@ function heuristic(grid::Array)
     gridSize = size(grid)[1]
     for row = 1:gridSize
         for col = 1:gridSize
-            gridValue = getGridValue(row, col)
+            gridValue = getGridValue(grid, row, col)
             if gridValue == 0
                 break
             end
-            freeSpaces[gridValue] += getFreeSpaces(row, col)
+            freeSpaces[gridValue] += getFreeSpaces(grid, row, col)
         end
     end
     return freeSpaces
@@ -199,9 +199,28 @@ function checkGroup(hexgrid::Array, row, col, value)
     end
 end
 
-
+# const global PLAYERCOLORS = ["\U2715", "\U25B3", "\U26C4", "\U2661"]
 # grid = initializeGrid(5)
-# # @time calculateScores(grid, 2)
+# setGridValue!(grid, 1, 1, 2)
+# setGridValue!(grid, 1, 2, 2)
+# setGridValue!(grid, 1, 3, 2)
+# setGridValue!(grid, 1, 5, 2)
+# setGridValue!(grid, 2, 6, 2)
+# setGridValue!(grid, 3, 1, 2)
+# setGridValue!(grid, 3, 2, 2)
+# setGridValue!(grid, 5, 1, 2)
+# setGridValue!(grid, 5, 4, 3)
+# setGridValue!(grid, 5, 5, 3)
 # setGridValue!(grid, 5, 6, 3)
-# @time getNeighbors(grid, 1, 1)
-# println("Neighbors of 5 5: ", getNeighbors(grid, 1, 1))
+# setGridValue!(grid, 6, 3, 3)
+# setGridValue!(grid, 7, 1, 3)
+# setGridValue!(grid, 7, 2, 3)
+# setGridValue!(grid, 9, 3, 3)
+# setGridValue!(grid, 9   , 4, 3)
+# printBoard(grid)
+# @time calculateScores(grid, 2)
+# # setGridValue!(grid, 5, 6, 3)
+# @time heuristic(grid)
+# println("Scores: ", calculateScores(grid, 2))
+# println("Heuristic: ", @view heuristic(grid)[2:end])
+# # println("Neighbors of 5 5: ", getNeighbors(grid, 1, 1))

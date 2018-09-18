@@ -73,6 +73,7 @@ function setGridValue!(grid::Array, row::Int, col::Int, value)
         return 0
     else
         grid[row, col+max(0, offset-(row-1))] = value
+        # TODO introduce a GROUPS variable that gets updated?
         return grid
     end
 end
@@ -110,6 +111,7 @@ function possibleMoves(hexgrid::Array)
     return moves
 end
 
+# hard coding is way faster than a for-loop
 function getNeighbors(grid:: Array, row::Int, col::Int)
     offset = Int((size(grid)[1]+1)/2)
     # The order is the following: left, right, top left, top right, bottom left, bottom right
@@ -129,25 +131,22 @@ function getNeighbors(grid:: Array, row::Int, col::Int)
     return neighbors
 end
 
-# TODO make it more efficient
 function calculateScores(hexgrid::Array, numPlayers)
     scores = [1, 1, 1, 1]
     # create a copy of the current grid and check groups
     gridSize = size(hexgrid)[1]
-    for player = 2:numPlayers+1
         grid = copy(hexgrid)
         for row = 1:gridSize
             for col = 1:gridSize
                 gridValue = getGridValue(grid, row, col)
                 if gridValue == 0
                     break
-                elseif gridValue == player
-                    scores[player-1] *= checkGroup(grid, row, col, player)
+                elseif gridValue > 1
+                    scores[gridValue-1] *= checkGroup(grid, row, col, gridValue)
                     # check if neighbors belong to same group and make this field free
                 end
             end
         end
-    end
     return scores
 end
 
@@ -216,11 +215,12 @@ end
 # setGridValue!(grid, 7, 1, 3)
 # setGridValue!(grid, 7, 2, 3)
 # setGridValue!(grid, 9, 3, 3)
-# setGridValue!(grid, 9   , 4, 3)
+# setGridValue!(grid, 9, 4, 3)
 # printBoard(grid)
 # @time calculateScores(grid, 2)
-# # setGridValue!(grid, 5, 6, 3)
+# setGridValue!(grid, 5, 6, 3)
 # @time heuristic(grid)
+# @time getNeighbors(grid, 5, 5)
+# println("Neighbors of 5 5: ", getNeighbors(grid, 5, 5))
 # println("Scores: ", calculateScores(grid, 2))
-# println("Heuristic: ", @view heuristic(grid)[2:end])
-# # println("Neighbors of 5 5: ", getNeighbors(grid, 1, 1))
+# println("heuristic: ", heuristic(grid))

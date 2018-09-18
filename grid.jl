@@ -113,20 +113,23 @@ end
 function getNeighbors(grid:: Array, row::Int, col::Int)
     offset = Int((size(grid)[1]+1)/2)
     # The order is the following: left, right, top left, top right, bottom left, bottom right
-    IMMEDIATE_NEIGHBORS = [[ 0, -1],                    # left
-                           [ 0,  1],                    # right
-                           [-1, -1*Int(row <= offset)], # top left
-                           [-1,  1*Int(row > offset)],  # top right
-                           [ 1, -1*Int(row >= offset)], # bottom left
-                           [ 1,  1*Int(row < offset)]]  # bottom right
-    # println("Hex: ", row, " ", col)
-    # for n in IMMEDIATE_NEIGHBORS
-    #     println("Neighbor ", " [", row+n[1],", ", col+n[2], "]")
-    # end
-    return [[row+n[1], col+n[2]] for n in IMMEDIATE_NEIGHBORS]
+    IN = [[ 0, -1],                    # left
+          [ 0,  1],                    # right
+          [-1, -1*Int(row <= offset)], # top left
+          [-1,  1*Int(row > offset)],  # top right
+          [ 1, -1*Int(row >= offset)], # bottom left
+          [ 1,  1*Int(row < offset)]]  # bottom right
+    neighbors = [[row+IN[1][1], col+IN[1][2]],
+                 [row+IN[2][1], col+IN[2][2]],
+                 [row+IN[3][1], col+IN[3][2]],
+                 [row+IN[4][1], col+IN[4][2]],
+                 [row+IN[5][1], col+IN[5][2]],
+                 [row+IN[6][1], col+IN[6][2]]
+                ]
+    return neighbors
 end
 
-
+# TODO make it more efficient
 function calculateScores(hexgrid::Array, numPlayers)
     scores = [1, 1, 1, 1]
     # create a copy of the current grid and check groups
@@ -148,6 +151,18 @@ function calculateScores(hexgrid::Array, numPlayers)
     return scores
 end
 
+# hardcoding the six neighbors is 4 times faster than going through it with a for loop or list comprehension
+function getFreeSpaces(grid::Array, row::Int, col::Int)
+    neighbors = getNeighbors(grid, row, col)
+    total = (Int(getGridValue(grid, neighbors[1][1], neighbors[1][2])==1) +
+            Int(getGridValue(grid, neighbors[2][1], neighbors[2][2])==1) +
+            Int(getGridValue(grid, neighbors[3][1], neighbors[3][2])==1) +
+            Int(getGridValue(grid, neighbors[4][1], neighbors[4][2])==1) +
+            Int(getGridValue(grid, neighbors[5][1], neighbors[5][2])==1) +
+            Int(getGridValue(grid, neighbors[6][1], neighbors[6][2])==1))
+    return total
+end
+
 # calculates the size of the group of the value
 # NOTE: THIS CHANGES THE GIVEN ARRAY!!!
 function checkGroup(hexgrid::Array, row, col, value)
@@ -167,3 +182,10 @@ function checkGroup(hexgrid::Array, row, col, value)
         return 1 + groupSize
     end
 end
+
+ 
+# grid = initializeGrid(5)
+# # @time calculateScores(grid, 2)
+# setGridValue!(grid, 5, 6, 3)
+# @time getNeighbors(grid, 1, 1)
+# println("Neighbors of 5 5: ", getNeighbors(grid, 1, 1))

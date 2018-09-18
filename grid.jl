@@ -163,6 +163,22 @@ function getFreeSpaces(grid::Array, row::Int, col::Int)
     return total
 end
 
+function heuristic(grid::Array)
+    # go over the array and count the free spaces for every player
+    freeSpaces = [0, 0, 0, 0, 0]
+    gridSize = size(grid)[1]
+    for row = 1:gridSize
+        for col = 1:gridSize
+            gridValue = getGridValue(row, col)
+            if gridValue == 0
+                break
+            end
+            freeSpaces[gridValue] += getFreeSpaces(row, col)
+        end
+    end
+    return freeSpaces
+end
+
 # calculates the size of the group of the value
 # NOTE: THIS CHANGES THE GIVEN ARRAY!!!
 function checkGroup(hexgrid::Array, row, col, value)
@@ -183,7 +199,7 @@ function checkGroup(hexgrid::Array, row, col, value)
     end
 end
 
- 
+
 # grid = initializeGrid(5)
 # # @time calculateScores(grid, 2)
 # setGridValue!(grid, 5, 6, 3)

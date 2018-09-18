@@ -110,7 +110,7 @@ function alphaBetaSearch(grid::Array, player::Int, alpha::Float64, beta::Float64
             # println("Depth: ", depth, " Value: ", value)
             # println("otherPlayer ", otherPlayer)
             # do deeper search there
-            value = max(value, alphaBetaSearch(grid, otherPlayer, -beta, -alpha, depth-1))
+            value = max(value, -alphaBetaSearch(grid, otherPlayer, -beta, -alpha, depth-1))
             alpha = max(alpha, value)
             # prune --> no need to look at the other children
             if alpha >= beta

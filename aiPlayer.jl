@@ -4,7 +4,7 @@ using IterTools
 using ProgressMeter
 """
 https://boardgamegeek.com/thread/563815/omega-pc-axiom-version-making-interesting-read
-'keep your groups similar in size; and keep your groups close to e in size'
+'keep your groups similar in size; and keep your groups close to e (~2.7) in size'
 
 grid is the field
 player is the color the AI tries to maximize
@@ -14,7 +14,8 @@ function makeSmartTurn(grid::Array, player::Int, timeLeft::Float64)
     # what moves are available
     posMoves = possibleMoves(grid)
 
-    global maxDepth = 3
+    # Iterative deepening only useful if having TranspositionTable
+    global maxDepth = 1
     timeElapsed = 0.0
     while timeElapsed < timeLeft
         # do alpha-beta-search
@@ -35,11 +36,12 @@ end
 # returns the best turn
 function alphaBeta(grid::Array, player::Int, maxDepth::Int)
     # do a copy of the grid and run alphaBetaSearch on it
-    print("init a-b with maxdepth = ", maxDepth)
+    println("init a-b with maxdepth = ", maxDepth)
     copiedGrid = copy(grid)
     posMoves = possibleMoves(copiedGrid)
+    println("PosMoves len: ", length(posMoves))
     # permutates the possible moves --> creates all possible turns
-    posTurns = subsets(posMoves, 2)
+    posTurns = [[i, j] for i in posMoves for j in posMoves if i!=j]
     println(" possible Turns: ", length(posTurns))
     # TODO TurnOrdering here
     # for all possible TURNS: execute them all. (turn = 2 moves)

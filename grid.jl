@@ -150,8 +150,8 @@ function calculateScores(hexgrid::Array, numPlayers)
     return scores
 end
 
-# hardcoding the six neighbors is 4 times faster than going through it with a for loop or list comprehension
-function getFreeSpaces(grid::Array, row::Int, col::Int)
+# hardcoding requires less memory
+function getNumFreeNeighbors(grid::Array, row::Int, col::Int)
     neighbors = getNeighbors(grid, row, col)
     total = (Int(getGridValue(grid, neighbors[1][1], neighbors[1][2])==1) +
             Int(getGridValue(grid, neighbors[2][1], neighbors[2][2])==1) +
@@ -172,7 +172,7 @@ function heuristic(grid::Array)
             if gridValue == 0
                 break
             end
-            freeSpaces[gridValue] += getFreeSpaces(grid, row, col)
+            freeSpaces[gridValue] += getNumFreeNeighbors(grid, row, col)
         end
     end
     return freeSpaces
@@ -198,6 +198,7 @@ function checkGroup(hexgrid::Array, row, col, value)
     end
 end
 
+
 # const global PLAYERCOLORS = ["\U2715", "\U25B3", "\U26C4", "\U2661"]
 # grid = initializeGrid(5)
 # setGridValue!(grid, 1, 1, 2)
@@ -217,10 +218,14 @@ end
 # setGridValue!(grid, 9, 3, 3)
 # setGridValue!(grid, 9, 4, 3)
 # printBoard(grid)
-# @time calculateScores(grid, 2)
-# setGridValue!(grid, 5, 6, 3)
-# @time heuristic(grid)
+# # # @time calculateScores(grid, 2)
+# @time getNumFreeNeighbors(grid, 1 , 3)
+# println(getNumFreeNeighbors(grid, 1, 3))
 # @time getNeighbors(grid, 5, 5)
 # println("Neighbors of 5 5: ", getNeighbors(grid, 5, 5))
 # println("Scores: ", calculateScores(grid, 2))
 # println("heuristic: ", heuristic(grid))
+# posMoves = [[1,1],[1,2],[1,3],[2,1],[2,2],[2,3]]
+# posTurns = [[i, j] for i in posMoves for j in posMoves if i!=j]
+# println("Length: ", length(posTurns))
+# println(posTurns)

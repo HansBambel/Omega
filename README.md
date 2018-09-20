@@ -7,6 +7,7 @@
 - install the following packages using Pkg.add("\<packagename\>")
   - Printf
   - IterTools
+  - DataStructures
   - ProgressMeter
 - exit julia (Ctrl + D)
 - Switch to the Omega folder

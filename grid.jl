@@ -1,6 +1,7 @@
 import Base:convert
 
 using Printf
+using DataStructures
 
 function printArray(a)
     for row = 1:size(a)[1]
@@ -198,7 +199,12 @@ function checkGroup(hexgrid::Array, row, col, value)
     end
 end
 
-
+# d = SortedDict()
+# d[2] = "name"
+# d[8] = "is tom"
+# d[1] = "my"
+# d[1] = "toast"
+# println(d)
 # const global PLAYERCOLORS = ["\U2715", "\U25B3", "\U26C4", "\U2661"]
 # grid = initializeGrid(5)
 # setGridValue!(grid, 1, 1, 2)

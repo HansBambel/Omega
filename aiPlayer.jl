@@ -15,6 +15,8 @@ function makeSmartTurn(grid::Array, player::Int, timeLeft::Float64)
     posMoves = possibleMoves(grid)
 
     # Iterative deepening only useful if having TranspositionTable
+    let
+    bestTurn = [posMoves[1], posMoves[2]]
     global maxDepth = 1
     timeElapsed = 0.0
     while timeElapsed < timeLeft
@@ -31,6 +33,7 @@ function makeSmartTurn(grid::Array, player::Int, timeLeft::Float64)
     setGridValue!(grid, bestTurn[1][1], bestTurn[1][2], 2)
     setGridValue!(grid, bestTurn[2][1], bestTurn[2][2], 3)
     printBoard(grid)
+    end
 end
 
 # returns the best turn
@@ -45,16 +48,19 @@ function alphaBeta(grid::Array, player::Int, maxDepth::Int)
     println(" possible Turns: ", length(posTurns))
     # TODO TurnOrdering here
     # for all possible TURNS: execute them all. (turn = 2 moves)
+    # let
     bestTurn = [posMoves[1], posMoves[2]]
     bestValue = -Inf
     bestAlpha = -Inf
     bestBeta = Inf
     # println("Possible turns at depth ", maxDepth, ": ", length(posTurns))
+    # TODO: parallelize this and write to a array/hashmap/sth else?
+    # valueOfTurn = Dict{Array{Array{Int, Int}, Array{Int, Int}}, Int}()
     @showprogress 1 "Alpha-Beta-Searching... " for turn in posTurns
         # execute moves
         setGridValue!(copiedGrid, turn[1][1], turn[1][2], 2)
         setGridValue!(copiedGrid, turn[2][1], turn[2][2], 3)
-        # Initial call of search
+        # Initial call of search for every possible Turn
         newValue = alphaBetaSearch(copiedGrid, player, bestAlpha, bestBeta, maxDepth)
         if newValue > bestValue
             bestTurn = turn
@@ -75,6 +81,7 @@ function alphaBeta(grid::Array, player::Int, maxDepth::Int)
     end
     # TODO HE CANT FIND THIS VARIABLE
     return bestTurn
+    # end
 end
 
 # returns best value in subtree

@@ -33,6 +33,9 @@ function makeSmartTurn(grid::Array, player::Int, timeLeft::Float64)
     # get the best move and play it
     setGridValue!(grid, bestTurn[1][1], bestTurn[1][2], 2)
     setGridValue!(grid, bestTurn[2][1], bestTurn[2][2], 3)
+
+    println(PLAYERCOLORS[1], " stone set on (", bestTurn[1][1], ", ", bestTurn[1][2], ")")
+    println(PLAYERCOLORS[2], " stone set on (", bestTurn[2][1], ", ", bestTurn[2][2], ")")
     printBoard(grid)
     end
 end
@@ -65,7 +68,7 @@ function alphaBeta(grid::Array, player::Int, maxDepth::Int, posTurns::Array, tim
         newValue = alphaBetaSearch(copiedGrid, player, bestAlpha, bestBeta, maxDepth, posTurns[1:end .!= index], timeLeft-((time_ns()-startTime)/1.0e9))
         if newValue > bestValue
             bestTurn = turn
-            println("Found better turn: ", bestTurn)
+            # println("Found better turn: ", bestTurn)
         end
         bestValue = max(bestValue, newValue)
         bestAlpha = max(bestAlpha, bestValue)
@@ -135,35 +138,35 @@ function alphaBetaSearch(grid::Array, player::Int, alpha::Float64, beta::Float64
     end
 end
 
-const global PLAYERCOLORS = ["\U2715", "\U25B3", "\U26C4", "\U2661"]
-grid = initializeGrid(4)
-players = 2
-printBoard(grid)
-
-totalTurnTime = 2*60
-turns = countNum(1, grid) / players
-aiTurns = turns ÷ 2
-timePerTurn = totalTurnTime / aiTurns
-println("Time per turn: ", timePerTurn, "s")
-
-turn = 0
-while(!gameOver(grid, players))
-    # each player after the other
-    for p in 1:players
-        global turn += 1
-        println("####   TURN ", turn, ": PLAYER ", PLAYERCOLORS[p], "   ####")
-        if p == 1
-            makeRandomTurn(grid, players)
-        else
-            # calculate how much time the algorithm gets
-            makeSmartTurn(grid, p, timePerTurn)
-        end
-
-    end
-end
-println("### Game ended ###")
-scores = calculateScores(grid, 2)
-println("Scores: ")
-for p in 1:players
-    println(PLAYERCOLORS[p], " has scored: ", scores[p], " points")
-end
+# const global PLAYERCOLORS = ["\U2715", "\U25B3", "\U26C4", "\U2661"]
+# grid = initializeGrid(4)
+# players = 2
+# printBoard(grid)
+#
+# totalTurnTime = 2*60
+# turns = countNum(1, grid) / players
+# aiTurns = turns ÷ 2
+# timePerTurn = totalTurnTime / aiTurns
+# println("Time per turn: ", timePerTurn, "s")
+#
+# turn = 0
+# while(!gameOver(grid, players))
+#     # each player after the other
+#     for p in 1:players
+#         global turn += 1
+#         println("####   TURN ", turn, ": PLAYER ", PLAYERCOLORS[p], "   ####")
+#         if p == 1
+#             makeRandomTurn(grid, players)
+#         else
+#             # calculate how much time the algorithm gets
+#             makeSmartTurn(grid, p, timePerTurn)
+#         end
+#
+#     end
+# end
+# println("### Game ended ###")
+# scores = calculateScores(grid, 2)
+# println("Scores: ")
+# for p in 1:players
+#     println(PLAYERCOLORS[p], " has scored: ", scores[p], " points")
+# end

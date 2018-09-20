@@ -1,6 +1,7 @@
 include("grid.jl")
 include("humanPlayer.jl")
 include("randomPlayer.jl")
+include("aiPlayer.jl")
 
 # https://unicode-table.com/en/
 
@@ -11,49 +12,61 @@ gridSize = 4
 if length(ARGS) == 0
     print(" How big shall the grid be? Should be between 5-10: ")
     gridSize = parse(Int, chomp(readline()))
-    # print(" How many players? ")
+    print(" Who are the players and what is the order? Ex.: rah = Random, AI, Human")
+    players = chomp(readline())
+    numPlayers = length(players)
     # numPlayers = parse(Int, chomp(readline()))
 elseif length(ARGS) == 1
     gridSize = parse(Int, ARGS[1])
-    print(" How many players? ")
-    numPlayers = parse(Int, chomp(readline()))
+    print(" Who are the players and what is the order? Ex.: rah = Random, AI, Human")
+    players = chomp(readline())
+    numPlayers = length(players)
 elseif length(ARGS) == 2
     gridSize = parse(Int, ARGS[1])
-    numPlayers = parse(Int, ARGS[2])
+    players = ARGS[2]
+    numPlayers = length(players)
 end
 
 hexgrid = initializeGrid(gridSize)
-
 printBoard(hexgrid)
-# totalTurns = (countNum(1, hexgrid)-1) / numPlayers
-totalTurns = countNum(1, hexgrid) / numPlayers
 
-# TODO ask whether human goes first or second
-# NOTE AI needs to know which player it is (2, 3, 4, 5) to maximize
+### This is the time the AI is allowed to have
+totalTurnTime = 2*60
+totalTurns = countNum(1, hexgrid) ÷ numPlayers
+aiTurns = totalTurns ÷ 2
+# TODO this time assumes every turn needs the same amount
+# idea: find out when/how deep the AI can look into endstate in a reasonable time
+timePerTurn = totalTurnTime / aiTurns
+
+timeAIneeded = 0
 turn = 0
 while(!gameOver(hexgrid, numPlayers))
     # each player after the other
     for p in 1:numPlayers
         global turn += 1
-        # Player 1 Turn
-        println("####   TURN ", turn, ": PLAYER ", PLAYERCOLORS[p], "   ####")
-        # if p == 1
-        #     makeTurn(hexgrid, numPlayers)
-        # else
-        makeRandomTurn(hexgrid, numPlayers)
-        # end
-        # print current board --> moved to Players
-        # # Player 2 Turn
-        # println("####   TURN: PLAYER 2   ####")
-        # makeTurn(hexgrid, numPlayers)
-        # # print current board
+
+        if (players[p] == 'r') | (players[p] == 'R')
+            println("####   TURN ", turn, ": RANDOM PLAYER ", PLAYERCOLORS[p], "   ####")
+            makeRandomTurn(hexgrid, numPlayers)
+        elseif (players[p] == 'a') | (players[p] == 'A')
+            println("####   TURN ", turn, ": AI PLAYER ", PLAYERCOLORS[p], "   ####")
+            global timeAIneeded += @elapsed makeSmartTurn(hexgrid, p, timePerTurn)
+        elseif (players[p] == 'h') | (players[p] == 'H')
+            println("####   TURN ", turn, ": HUMAN PLAYER ", PLAYERCOLORS[p], "   ####")
+            makeTurn(hexgrid, numPlayers)
+        end
     end
 end
+
 println("Calculated TOTAL_TURNS: ", totalTurns)
+if 'a' in players
+    println("AI needed ", timeAIneeded, "s of its ", totalTurnTime, "s.")
+end
 println("### Game ended ###")
 scores = calculateScores(hexgrid, numPlayers)
 println("Scores: ")
 for p in 1:numPlayers
     println(PLAYERCOLORS[p], " has scored: ", scores[p], " points")
 end
+println(PLAYERCOLORS[findmax(scores)[2]], " is the Winner!")
 # print Scores and declare winner

@@ -199,6 +199,9 @@ function checkGroup(hexgrid::Array, row, col, value)
     end
 end
 
+# startTime = time_ns()
+# sleep(1)
+# println((time_ns()-startTime)/1.0e9)
 # d = SortedDict()
 # d[2] = "name"
 # d[8] = "is tom"

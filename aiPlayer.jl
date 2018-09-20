@@ -13,17 +13,18 @@ time is the time left to compute
 function makeSmartTurn(grid::Array, player::Int, timeLeft::Float64)
     # what moves are available
     posMoves = possibleMoves(grid)
-
+    posTurns = [[i, j] for i in posMoves for j in posMoves if i!=j]
+    # count number of turns
+    turns = countNum(1, grid) / 2
     # Iterative deepening only useful if having TranspositionTable
     let
     bestTurn = [posMoves[1], posMoves[2]]
     global maxDepth = 1
     timeElapsed = 0.0
-    while timeElapsed < timeLeft
+    while (timeElapsed < timeLeft) & (maxDepth <= turns)
         # do alpha-beta-search
-        # TODO maybe time after - time now is better
         println("Depth: ", maxDepth)
-        bestTurn, time, memory, _, _ = @timed alphaBeta(grid, player, maxDepth)
+        bestTurn, time, memory, _, _ = @timed alphaBeta(grid, player, maxDepth, posTurns, timeLeft-timeElapsed)
         timeElapsed += time
         println("Time: ", time, "s; memory used: ", memory/1024, " kbytes")
         global maxDepth += 1
@@ -37,31 +38,31 @@ function makeSmartTurn(grid::Array, player::Int, timeLeft::Float64)
 end
 
 # returns the best turn
-function alphaBeta(grid::Array, player::Int, maxDepth::Int)
+function alphaBeta(grid::Array, player::Int, maxDepth::Int, posTurns::Array, timeLeft::Float64)
     # do a copy of the grid and run alphaBetaSearch on it
-    println("init a-b with maxdepth = ", maxDepth)
     copiedGrid = copy(grid)
-    posMoves = possibleMoves(copiedGrid)
-    println("PosMoves len: ", length(posMoves))
-    # permutates the possible moves --> creates all possible turns
-    posTurns = [[i, j] for i in posMoves for j in posMoves if i!=j]
     println(" possible Turns: ", length(posTurns))
     # TODO TurnOrdering here
     # for all possible TURNS: execute them all. (turn = 2 moves)
     # let
-    bestTurn = [posMoves[1], posMoves[2]]
+    bestTurn = posTurns[1]
     bestValue = -Inf
     bestAlpha = -Inf
     bestBeta = Inf
+    startTime = time_ns()
     # println("Possible turns at depth ", maxDepth, ": ", length(posTurns))
     # TODO: parallelize this and write to a array/hashmap/sth else?
     # valueOfTurn = Dict{Array{Array{Int, Int}, Array{Int, Int}}, Int}()
-    @showprogress 1 "Alpha-Beta-Searching... " for turn in posTurns
+    @showprogress 1 "Alpha-Beta-Searching... " for (index, turn) in enumerate(posTurns)
+        # if not enough time: stop and return (current) bestTurn
+        if (time_ns()-startTime)/1.0e9 >= timeLeft
+            return bestTurn
+        end
         # execute moves
         setGridValue!(copiedGrid, turn[1][1], turn[1][2], 2)
         setGridValue!(copiedGrid, turn[2][1], turn[2][2], 3)
         # Initial call of search for every possible Turn
-        newValue = alphaBetaSearch(copiedGrid, player, bestAlpha, bestBeta, maxDepth)
+        newValue = alphaBetaSearch(copiedGrid, player, bestAlpha, bestBeta, maxDepth, posTurns[1:end .!= index], timeLeft-((time_ns()-startTime)/1.0e9))
         if newValue > bestValue
             bestTurn = turn
             println("Found better turn: ", bestTurn)
@@ -79,13 +80,11 @@ function alphaBeta(grid::Array, player::Int, maxDepth::Int)
         setGridValue!(copiedGrid, turn[1][1], turn[1][2], 1)
         setGridValue!(copiedGrid, turn[2][1], turn[2][2], 1)
     end
-    # TODO HE CANT FIND THIS VARIABLE
     return bestTurn
-    # end
 end
 
 # returns best value in subtree
-function alphaBetaSearch(grid::Array, player::Int, alpha::Float64, beta::Float64, depth::Int)
+function alphaBetaSearch(grid::Array, player::Int, alpha::Float64, beta::Float64, depth::Int, posTurns::Array, timeLeft::Float64)
     # if in terminal state
     # println("started search on depth: ", depth)
     otherPlayer = player == 2 ? 3 : 2
@@ -104,22 +103,21 @@ function alphaBetaSearch(grid::Array, player::Int, alpha::Float64, beta::Float64
         # return a heuristic-value ("AN ADMISSABLE HEURISTIC NEVER OVERESTIMATES!" - Helmar Gust)
     # continue searching
     else
+        startTime = time_ns()
         # NOTE MAKE a "turn" consist of moving twice --> reduces search breadth
-        posMoves = possibleMoves(grid)
-        # permutates the possible moves --> creates all possible turns
-        posTurns = subsets(posMoves, 2)
-        # TODO TurnOrdering here
+        # TODO TurnOrdering here (needs TranspositionTable)
         # for all possible TURNS: execute them all. (turn = 2 moves)
-        # NOTE maybe put these before if
 
-        for turn in posTurns
+        for (index, turn) in enumerate(posTurns)
+            # if no time left
+            if timeLeft-(time_ns()-startTime)/1.0e9 <= 0
+                return value
+            end
             # execute the two moves
             setGridValue!(grid, turn[1][1], turn[1][2], 2)
             setGridValue!(grid, turn[2][1], turn[2][2], 3)
-            # println("Depth: ", depth, " Value: ", value)
-            # println("otherPlayer ", otherPlayer)
             # do deeper search there
-            value = max(value, -alphaBetaSearch(grid, otherPlayer, -beta, -alpha, depth-1))
+            value = max(value, -alphaBetaSearch(grid, otherPlayer, -beta, -alpha, depth-1, posTurns[1:end .!= index], timeLeft-(time_ns()-startTime)/1.0e9))
             alpha = max(alpha, value)
             # prune --> no need to look at the other children
             if alpha >= beta
@@ -164,7 +162,7 @@ while(!gameOver(grid, players))
     end
 end
 println("### Game ended ###")
-scores = calculateScores(hexgrid)
+scores = calculateScores(grid, 2)
 println("Scores: ")
 for p in 1:players
     println(PLAYERCOLORS[p], " has scored: ", scores[p], " points")

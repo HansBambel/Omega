@@ -165,6 +165,7 @@ end
 
 function heuristic(grid::Array)
     # go over the array and count the free spaces for every player
+    # TODO calc num of 2s : a group of 2 exist when the stones have no free neighbors and at most 1 of its own color
     freeSpaces = [0, 0, 0, 0, 0]
     gridSize = size(grid)[1]
     for row = 1:gridSize

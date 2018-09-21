@@ -34,23 +34,22 @@ end
 function iterativeDeepening(grid::Array, player::Int, timeLeft::Float64)::Array{Array{Int, 2}}
     # what moves are available
     posMoves = possibleMoves(grid)
+    # println("turns left: ", length(posMoves) ÷ 2)
     # calculate all possible turns from those moves
     posTurns = [[i, j] for i in posMoves for j in posMoves if i!=j]
-    println(" possible Turns: ", length(posTurns))
-    # Iterative deepening
+    # println(" possible Turns: ", length(posTurns))
     # Iterative deepening only useful if having TranspositionTable
-    # TODO create transpositionTable(hashmap)
+    # create transpositionTable(hashmap)
     # TT looks the following: key=grid, value=Tuple(value, flag, searchDepth, bestTurn)
     transpositionTable = Dict{Array, Tuple{Float64, Int, Int, Array}}()
 
     let
     maxDepth = 1
     timeElapsed = 0.0
-    # count number of turns
-    while timeElapsed < timeLeft
+    # number of turns left: length(posMoves) ÷ 2
+    println("Turns left: ", length(posMoves) ÷ 2)
+    while (timeElapsed < timeLeft) & (maxDepth <= length(posMoves) ÷ 2)
         # do alpha-beta-search
-        println("Depth: ", maxDepth)
-
         # do a copy of the grid and run alphaBetaSearch on it
         copiedGrid = copy(grid)
         # for all possible TURNS: execute them all
@@ -59,15 +58,16 @@ function iterativeDeepening(grid::Array, player::Int, timeLeft::Float64)::Array{
         initBeta = Inf
         startTime = time_ns()
         # println("Possible turns at depth ", maxDepth, ": ", length(posTurns))
-        newValue = alphaBetaSearch(copiedGrid, transpositionTable, player, initAlpha, initBeta, maxDepth, posTurns, timeLeft-timeElapsed)
+        newValue, time, _, _, _ = @timed alphaBetaSearch(copiedGrid, transpositionTable, player, initAlpha, initBeta, maxDepth, posTurns, timeLeft-timeElapsed)
 
+        println("Depth ", maxDepth, " took ", time,"s")
         # Write in hashmap
 
         timeElapsed += (time_ns()-startTime)/1.0e9
         maxDepth += 1
 
     end
-    println("MaxDepth = ", maxDepth-1)
+    # println("MaxDepth = ", maxDepth-1)
     end
     # look up state in hashmap and return the best turn from it
     _, _, _, bestTurn = get(transpositionTable, grid, (0.0, 0, 0, posTurns[1]))
@@ -87,10 +87,9 @@ function alphaBetaSearch(grid::Array,
     oldAlpha = alpha
     value = -Inf # this needs to be outside the "if" because... Julia
     bestTurn = posTurns[1]
-
     # look in transpositionTable for entry
     if haskey(transpositionTable, grid)
-        ttValue, ttFlag, ttDepth, ttTurn = get(transpositionTable, grid, (0.0, 0, -1, bestTurn))
+        ttValue, ttFlag, ttDepth, ttTurn = transpositionTable[grid]
         # check if we already have been here and get info
         if ttDepth >= depth
             if ttFlag == EXACT
@@ -106,9 +105,11 @@ function alphaBetaSearch(grid::Array,
             end
         end
     end
+    # TODO IS THIS ALREADY TURNORDERING?
+
 
     # if no possible move --> gameover (terminal state)
-    if length(posTurns) <= 0
+    if gameOver(grid, 2)
         scores = calculateScores(grid, 2)
         return scores[player]-scores[otherPlayer]
     # not yet finished, but max search depth
@@ -120,7 +121,6 @@ function alphaBetaSearch(grid::Array,
     # continue searching
     else
         startTime = time_ns()
-        # TODO TurnOrdering here (needs TranspositionTable)
         # for all possible TURNS: execute them all
         for (index, turn) in enumerate(posTurns)
             # if no time left

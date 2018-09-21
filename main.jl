@@ -36,6 +36,8 @@ totalTurns = countNum(1, hexgrid) ÷ numPlayers
 aiTurns = totalTurns ÷ 2
 # TODO this time assumes every turn needs the same amount
 # idea: find out when/how deep the AI can look into endstate in a reasonable time
+# NOTE later AI needs only a little bit of time because he doesn't need to look deep
+# the last 4 turns can be calculated within 1s
 timePerTurn = totalTurnTime / aiTurns
 
 timeAIneeded = 0
@@ -50,7 +52,9 @@ while(!gameOver(hexgrid, numPlayers))
             makeRandomTurn(hexgrid, numPlayers)
         elseif (players[p] == 'a') | (players[p] == 'A')
             println("####   TURN ", turn, ": AI PLAYER ", PLAYERCOLORS[p], "   ####")
-            global timeAIneeded += @elapsed makeSmartTurn(hexgrid, p, timePerTurn)
+            timeForTurn = @elapsed makeSmartTurn(hexgrid, p, timePerTurn)
+            global timeAIneeded += timeForTurn
+            println("AI needed ", timeForTurn, "s of its given ", timePerTurn, "s")
         elseif (players[p] == 'h') | (players[p] == 'H')
             println("####   TURN ", turn, ": HUMAN PLAYER ", PLAYERCOLORS[p], "   ####")
             makeTurn(hexgrid, numPlayers)

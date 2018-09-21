@@ -48,7 +48,7 @@ function initializeGrid(gridSize::Int)
 end
 
 # getter for getting value of hexgrid
-function getGridValue(grid::Array, row::Int, col::Int)
+function getGridValue(grid::Array, row::Int, col::Int)::Int8
     @assert row >= 0 "row can't be smaller than 0"
     @assert col >= 0 "col can't be smaller than 0"
     offset = Int((size(grid)[1]-1)/2)
@@ -80,7 +80,7 @@ function setGridValue!(grid::Array, row::Int, col::Int, value)
 end
 
 # useful function to count occurences of a number in array
-function countNum(pred::Int, a::Array)
+function countNum(pred::Int, a::Array)::Int
     n = 0
     for i in eachindex(a)
         @inbounds n += pred == a[i]
@@ -89,15 +89,14 @@ function countNum(pred::Int, a::Array)
 end
 
 # check whether another round can be played
-function gameOver(hexgrid::Array, players::Int)
+function gameOver(hexgrid::Array, players::Int)::Bool
     freeHexagons = countNum(1, hexgrid)
     # println("Free hexes: ", freeHexagons, " needed Moves: ", players^2)
     return freeHexagons < players^2
 end
 
 # list all possible moves
-# NOTE maybe make this array from the beginning and remove the made move
-function possibleMoves(hexgrid::Array)
+function possibleMoves(hexgrid::Array)::Array
     moves = []
     for row = 1:size(hexgrid)[1]
         for col = 1:size(hexgrid)[1]
@@ -113,7 +112,7 @@ function possibleMoves(hexgrid::Array)
 end
 
 # hard coding is way faster than a for-loop
-function getNeighbors(grid:: Array, row::Int, col::Int)
+function getNeighbors(grid:: Array, row::Int, col::Int)::Array
     offset = Int((size(grid)[1]+1)/2)
     # The order is the following: left, right, top left, top right, bottom left, bottom right
     IN = [[ 0, -1],                    # left
@@ -132,8 +131,8 @@ function getNeighbors(grid:: Array, row::Int, col::Int)
     return neighbors
 end
 
-function calculateScores(hexgrid::Array, numPlayers)
-    scores = [1, 1, 1, 1]
+function calculateScores(hexgrid::Array, numPlayers)::Array{Float64}
+    scores = [1.0, 1.0, 1.0, 1.0]
     # create a copy of the current grid and check groups
     gridSize = size(hexgrid)[1]
         grid = copy(hexgrid)
@@ -152,7 +151,7 @@ function calculateScores(hexgrid::Array, numPlayers)
 end
 
 # hardcoding requires less memory
-function getNumFreeNeighbors(grid::Array, row::Int, col::Int)
+function getNumFreeNeighbors(grid::Array, row::Int, col::Int)::Int
     neighbors = getNeighbors(grid, row, col)
     total = (Int(getGridValue(grid, neighbors[1][1], neighbors[1][2])==1) +
             Int(getGridValue(grid, neighbors[2][1], neighbors[2][2])==1) +
@@ -163,10 +162,10 @@ function getNumFreeNeighbors(grid::Array, row::Int, col::Int)
     return total
 end
 
-function heuristic(grid::Array)
+function heuristic(grid::Array)::Array{Float64}
     # go over the array and count the free spaces for every player
-    # TODO calc num of 2s : a group of 2 exist when the stones have no free neighbors and at most 1 of its own color
-    freeSpaces = [0, 0, 0, 0, 0]
+    # TODO calc num of 2s : a group of 2 exist when the stones have no free neighbors and borders with 1 of its own color
+    freeSpaces = [0.0, 0.0, 0.0]
     gridSize = size(grid)[1]
     for row = 1:gridSize
         for col = 1:gridSize
@@ -182,21 +181,21 @@ end
 
 # calculates the size of the group of the value
 # NOTE: THIS CHANGES THE GIVEN ARRAY!!!
-function checkGroup(hexgrid::Array, row, col, value)
+function checkGroup(hexgrid::Array, row::Int, col::Int, value::Int8)::Float64
     # if the new field is not of the same player --> stop
     if getGridValue(hexgrid, row, col) != value
-        return 0
+        return 0.0
     else # otherwise set it free and look whether there are more belonging to the group
         # TODO check whether calculations are still correct in big groups
         # --> may overwrite each other
         # grid = copy(hexgrid)
         setGridValue!(hexgrid, row, col, 1)
-        groupSize = 0
+        groupSize = 0.0
         neighbors = getNeighbors(hexgrid, row, col)
         for n in neighbors
             groupSize += checkGroup(hexgrid, n[1], n[2], value)
         end
-        return 1 + groupSize
+        return 1.0 + groupSize
     end
 end
 

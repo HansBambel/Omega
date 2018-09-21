@@ -23,10 +23,10 @@ function makeSmartTurn(grid::Array, player::Int, timeLeft::Float64)
     timeElapsed = 0.0
     while (timeElapsed < timeLeft) & (maxDepth <= turns)
         # do alpha-beta-search
-        println("Depth: ", maxDepth)
+        # println("Depth: ", maxDepth)
         bestTurn, time, memory, _, _ = @timed alphaBeta(grid, player, maxDepth, posTurns, timeLeft-timeElapsed)
         timeElapsed += time
-        println("Time: ", time, "s; memory used: ", memory/1024, " kbytes")
+        # println("Time: ", time, "s; memory used: ", memory/1024, " kbytes")
         global maxDepth += 1
     end
     println("MaxDepth = ", maxDepth-1)
@@ -42,7 +42,7 @@ end
 
 # returns the best turn
 function alphaBeta(grid::Array, player::Int, maxDepth::Int, posTurns::Array, timeLeft::Float64)::Array#{Array{Int, 2}}
-    println(" possible Turns: ", length(posTurns))
+    # println(" possible Turns: ", length(posTurns))
     # TODO TurnOrdering here
     # do a copy of the grid and run alphaBetaSearch on it
     # copiedGrid = copy(grid)
@@ -62,12 +62,12 @@ function alphaBeta(grid::Array, player::Int, maxDepth::Int, posTurns::Array, tim
     bestBeta = Array{Float64}(undef, Threads.nthreads())
     startTime = Array{Float64}(undef, Threads.nthreads())
     for i in 1:Threads.nthreads()
-        grids[Threads.threadid()] = deepcopy(grid)
-        bestTurn[Threads.threadid()] = posTurns[1]
-        bestValue[Threads.threadid()] = -Inf
-        bestAlpha[Threads.threadid()] = -Inf
-        bestBeta[Threads.threadid()] = Inf
-        startTime[Threads.threadid()] = time_ns()
+        grids[i] = deepcopy(grid)
+        bestTurn[i] = posTurns[1]
+        bestValue[i] = -Inf
+        bestAlpha[i] = -Inf
+        bestBeta[i] = Inf
+        startTime[i] = time_ns()
     end
     # println("typeof(posTurns[1]) ", typeof(posTurns[1]), " looks like this: ", posTurns[1])
     # for i in 1:Threads.nthreads()
@@ -85,18 +85,18 @@ function alphaBeta(grid::Array, player::Int, maxDepth::Int, posTurns::Array, tim
     # @showprogress 1 "Alpha-Beta-Searching... " for (index, turn) in enumerate(posTurns)
     # for all possible TURNS: execute them all. (turn = 2 moves)
     # TODO maybe the threads have a problem with enumerate and thus index
-    Threads.@threads for (index, turn) in enumerate(posTurns) # Try parallelisation
+    Threads.@threads for index = 1:length(posTurns) # Try parallelisation
         # if not enough time: stop and return (current) bestTurn
         if (time_ns()-startTime[Threads.threadid()])/1.0e9 >= timeLeft
             break
         end
         # execute moves
-        setGridValue!(grids[Threads.threadid()], turn[1][1], turn[1][2], 2)
-        setGridValue!(grids[Threads.threadid()], turn[2][1], turn[2][2], 3)
+        setGridValue!(grids[Threads.threadid()], posTurns[index][1][1], posTurns[index][1][2], 2)
+        setGridValue!(grids[Threads.threadid()], posTurns[index][2][1], posTurns[index][2][2], 3)
         # Initial call of search for every possible Turn
         newValue = alphaBetaSearch(grids[Threads.threadid()], player, bestAlpha[Threads.threadid()], bestBeta[Threads.threadid()], maxDepth, posTurns[1:end .!= index], timeLeft-((time_ns()-startTime[Threads.threadid()])/1.0e9))
         if newValue > bestValue[Threads.threadid()]
-            bestTurn[Threads.threadid()] = (turn, newValue)
+            bestTurn[Threads.threadid()] = posTurns[index]
         # if newValue > bestValue
             # bestTurn = turn
             # println("Found better turn: ", bestTurn)
@@ -105,16 +105,18 @@ function alphaBeta(grid::Array, player::Int, maxDepth::Int, posTurns::Array, tim
         bestAlpha[Threads.threadid()] = max(bestAlpha[Threads.threadid()], bestValue[Threads.threadid()])
         # prune --> no need to look at the other children
         if bestAlpha[Threads.threadid()] >= bestBeta[Threads.threadid()]
-            setGridValue!(grids[Threads.threadid()], turn[1][1], turn[1][2], 1)
-            setGridValue!(grids[Threads.threadid()], turn[2][1], turn[2][2], 1)
+            setGridValue!(grids[Threads.threadid()], posTurns[index][1][1], posTurns[index][1][2], 1)
+            setGridValue!(grids[Threads.threadid()], posTurns[index][2][1], posTurns[index][2][2], 1)
             break
         end
 
         # undo all the moves
-        setGridValue!(grids[Threads.threadid()], turn[1][1], turn[1][2], 1)
-        setGridValue!(grids[Threads.threadid()], turn[2][1], turn[2][2], 1)
+        setGridValue!(grids[Threads.threadid()], posTurns[index][1][1], posTurns[index][1][2], 1)
+        setGridValue!(grids[Threads.threadid()], posTurns[index][2][1], posTurns[index][2][2], 1)
     end
-    return bestTurn[findmax(bestValue)[2]][1]
+    # println("bestTurn: ", bestTurn)
+    # println("bestTurn[findmax(bestValue)[2]]: ", bestTurn[findmax(bestValue)[2]])
+    return bestTurn[findmax(bestValue)[2]]
 end
 
 # returns best value in subtree

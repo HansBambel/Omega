@@ -23,10 +23,12 @@ function makeSmartTurn(grid::Array, player::Int, timeLeft::Float64)
     timeElapsed = 0.0
     while (timeElapsed < timeLeft) & (maxDepth <= turns)
         # do alpha-beta-search
-        # println("Depth: ", maxDepth)
+        println("Depth: ", maxDepth)
+        # TODO TurnOrdering here (needs TranspositionTable)
+
         bestTurn, time, memory, _, _ = @timed alphaBeta(grid, player, maxDepth, posTurns, timeLeft-timeElapsed)
         timeElapsed += time
-        # println("Time: ", time, "s; memory used: ", memory/1024, " kbytes")
+        println("Time: ", time, "s; memory used: ", memory/1024, " kbytes")
         global maxDepth += 1
     end
     println("MaxDepth = ", maxDepth-1)
@@ -135,7 +137,6 @@ function alphaBetaSearch(grid::Array, player::Int, alpha::Float64, beta::Float64
     else
         startTime = time_ns()
         # NOTE MAKE a "turn" consist of moving twice --> reduces search breadth
-        # TODO TurnOrdering here (needs TranspositionTable)
         # for all possible TURNS: execute them all. (turn = 2 moves)
 
         for (index, turn) in enumerate(posTurns)

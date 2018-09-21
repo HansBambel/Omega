@@ -45,17 +45,11 @@ function alphaBeta(grid::Array, player::Int, maxDepth::Int, posTurns::Array, tim
     # println(" possible Turns: ", length(posTurns))
     # TODO TurnOrdering here
     # do a copy of the grid and run alphaBetaSearch on it
-    # copiedGrid = copy(grid)
-    # bestValue = -Inf
-    # bestAlpha = -Inf
-    # bestBeta = Inf
-    # startTime = time_ns()
     # println("Possible turns at depth ", maxDepth, ": ", length(posTurns))
-    # TODO: parallelize this and write to a array/hashmap/sth else?
+    # parallelize this and write to a array
     # create arrays the size of the threads
     # println("Threads: ", Threads.nthreads())
     grids = Array{Array}(undef, Threads.nthreads())
-    # bestTurn = Array{Array{Array{Int, Int}, Array{Int, Int}}}(undef, Threads.nthreads())
     bestTurn = Array{Array{Array{Int, 2}, 1}}(undef, Threads.nthreads())
     bestValue = Array{Float64}(undef, Threads.nthreads())
     bestAlpha = Array{Float64}(undef, Threads.nthreads())
@@ -125,7 +119,7 @@ function alphaBetaSearch(grid::Array, player::Int, alpha::Float64, beta::Float64
     # println("started search on depth: ", depth)
     otherPlayer = player == 2 ? 3 : 2
     value = -Inf
-    if gameOver(grid, 2)
+    if length(posTurns) <= 0 # if no possible move --> gameover
         scores = calculateScores(grid, 2)
         return scores[player]-scores[otherPlayer]
         # eval board

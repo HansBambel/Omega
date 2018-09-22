@@ -18,5 +18,5 @@ Furthermore you can run the main.jl using keyword arguments:
   - "julia main.jl 4 hr" creates a game of omega of grid size 4 and players Human and Random
   - Note: these arguments may change later
 
-Not yet implemented:
+Not yet implemented (on master):
   - you can run the game with multiple threads. To do this write "export JULIA_NUM_THREADS=4" on the bash to start julia with 4 threads

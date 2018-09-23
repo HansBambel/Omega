@@ -25,7 +25,7 @@ function printBoard(a::Array)
                 print(" ", PLAYERCOLORS[val-1], indent)
             else
                 # Free field (used to be val)
-                print(" ", "\U2B23", indent)
+                print(" ", "\U2B22", indent)
             end
         end
         println()
@@ -111,7 +111,7 @@ function possibleMoves(hexgrid::Array)::Array
     return moves
 end
 
-# hard coding is way faster than a for-loop
+# hard coding is faster than a for-loop
 function getNeighbors(grid:: Array, row::Int, col::Int)::Array
     offset = Int((size(grid)[1]+1)/2)
     # The order is the following: left, right, top left, top right, bottom left, bottom right
@@ -163,9 +163,10 @@ function getNumFreeNeighbors(grid::Array, row::Int, col::Int)::Int
 end
 
 function heuristic(grid::Array)::Array{Float64}
-    # go over the array and count the free spaces for every player
-    # TODO calc num of 2s : a group of 2 exist when the stones have no free neighbors and borders with 1 of its own color
+    # idea: go over the array and count the free spaces for every player
+    # TODO calc num of safe groups : a safe group exists when the stones have no free neighbors and borders with its own color
     freeSpaces = [0.0, 0.0, 0.0]
+
     gridSize = size(grid)[1]
     for row = 1:gridSize
         for col = 1:gridSize
@@ -173,7 +174,11 @@ function heuristic(grid::Array)::Array{Float64}
             if gridValue == 0
                 break
             end
-            freeSpaces[gridValue] += getNumFreeNeighbors(grid, row, col)
+            numFree = getNumFreeNeighbors(grid, row, col)
+            freeSpaces[gridValue] += numFree
+            if numFree == 0
+                # check if it has neighbors of same color group / add somewhere
+            end
         end
     end
     return freeSpaces

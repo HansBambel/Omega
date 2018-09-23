@@ -17,7 +17,8 @@ player is the color the AI tries to maximize
 time is the time left to compute
 """
 function makeSmartTurn(grid::Array, player::Int, timeLeft::Float64)
-
+    # TODO make smart time management (when the game is more advanced it requires less time to search)
+    # --> in the beginning do bigger search, later less needed
     bestTurn = iterativeDeepening(grid, player, timeLeft)
 
     # get the best move and play it
@@ -42,7 +43,7 @@ function iterativeDeepening(grid::Array, player::Int, timeLeft::Float64)::Array{
     # create transpositionTable(hashmap)
     # TT looks the following: key=grid, value=Tuple(value, flag, searchDepth, bestTurn)
     transpositionTable = Dict{Array, Tuple{Float64, Int, Int, Array}}()
-
+    println("Time left: ", timeLeft)
     let
     maxDepth = 1
     timeElapsed = 0.0
@@ -57,7 +58,7 @@ function iterativeDeepening(grid::Array, player::Int, timeLeft::Float64)::Array{
         initAlpha = -Inf
         initBeta = Inf
         startTime = time_ns()
-        # println("Possible turns at depth ", maxDepth, ": ", length(posTurns))
+        println("Possible turns at depth ", maxDepth, ": ", length(posTurns))
         newValue, time, _, _, _ = @timed alphaBetaSearch(copiedGrid, transpositionTable, player, initAlpha, initBeta, maxDepth, posTurns, timeLeft-timeElapsed)
 
         println("Depth ", maxDepth, " took ", time,"s")
@@ -70,6 +71,11 @@ function iterativeDeepening(grid::Array, player::Int, timeLeft::Float64)::Array{
     # println("MaxDepth = ", maxDepth-1)
     end
     # look up state in hashmap and return the best turn from it
+    # println("transpositionTable:")
+    # println(transpositionTable)
+    # printBoard(grid)
+    println("Best Move: ", transpositionTable[grid])
+    # sleep(3)
     _, _, _, bestTurn = get(transpositionTable, grid, (0.0, 0, 0, posTurns[1]))
     return bestTurn
 end
@@ -89,6 +95,7 @@ function alphaBetaSearch(grid::Array,
     bestTurn = posTurns[1]
     # look in transpositionTable for entry
     if haskey(transpositionTable, grid)
+        # println("Has Entry: ", transpositionTable[grid])
         ttValue, ttFlag, ttDepth, ttTurn = transpositionTable[grid]
         # check if we already have been here and get info
         if ttDepth >= depth
@@ -105,11 +112,11 @@ function alphaBetaSearch(grid::Array,
             end
         end
     end
-    # TODO IS THIS ALREADY TURNORDERING?
-
+    # TODO IS THIS ^ ALREADY TURNORDERING?
 
     # if no possible move --> gameover (terminal state)
-    if gameOver(grid, 2)
+    # if gameOver(grid, 2)
+    if length(posTurns) < 2
         scores = calculateScores(grid, 2)
         return scores[player]-scores[otherPlayer]
     # not yet finished, but max search depth
@@ -122,9 +129,11 @@ function alphaBetaSearch(grid::Array,
     else
         startTime = time_ns()
         # for all possible TURNS: execute them all
+        println("Not game over or search depth reached")
         for (index, turn) in enumerate(posTurns)
             # if no time left
             if timeLeft <= (time_ns()-startTime)/1.0e9
+                # println("Not time left --> no write in transpositionTable")
                 return value
             end
             # execute the two moves
@@ -149,6 +158,8 @@ function alphaBetaSearch(grid::Array,
             setGridValue!(grid, turn[2][1], turn[2][2], 1)
         end
 
+        println("Store the result")
+        println("Value: ", value, " oldAlpha: ", oldAlpha, " beta: ", beta)
         # Store (more accurate) result in transpositionTable
         if value <= oldAlpha
             transpositionTable[grid] = value, UPPER, depth, bestTurn
@@ -162,36 +173,3 @@ function alphaBetaSearch(grid::Array,
         return value
     end
 end
-
-# const global PLAYERCOLORS = ["\U2715", "\U25B3", "\U26C4", "\U2661"]
-# grid = initializeGrid(4)
-# players = 2
-# printBoard(grid)
-#
-# totalTurnTime = 2*60
-# turns = countNum(1, grid) / players
-# aiTurns = turns ÷ 2
-# timePerTurn = totalTurnTime / aiTurns
-# println("Time per turn: ", timePerTurn, "s")
-#
-# turn = 0
-# while(!gameOver(grid, players))
-#     # each player after the other
-#     for p in 1:players
-#         global turn += 1
-#         println("####   TURN ", turn, ": PLAYER ", PLAYERCOLORS[p], "   ####")
-#         if p == 1
-#             makeRandomTurn(grid, players)
-#         else
-#             # calculate how much time the algorithm gets
-#             makeSmartTurn(grid, p, timePerTurn)
-#         end
-#
-#     end
-# end
-# println("### Game ended ###")
-# scores = calculateScores(grid, 2)
-# println("Scores: ")
-# for p in 1:players
-#     println(PLAYERCOLORS[p], " has scored: ", scores[p], " points")
-# end

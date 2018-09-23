@@ -129,7 +129,7 @@ function alphaBetaSearch(grid::Array,
     else
         startTime = time_ns()
         # for all possible TURNS: execute them all
-        println("Not game over or search depth reached")
+        # println("Not game over or search depth reached")
         for (index, turn) in enumerate(posTurns)
             # if no time left
             if timeLeft <= (time_ns()-startTime)/1.0e9
@@ -158,8 +158,8 @@ function alphaBetaSearch(grid::Array,
             setGridValue!(grid, turn[2][1], turn[2][2], 1)
         end
 
-        println("Store the result")
-        println("Value: ", value, " oldAlpha: ", oldAlpha, " beta: ", beta)
+        # println("Store the result")
+        # println("Value: ", value, " oldAlpha: ", oldAlpha, " beta: ", beta)
         # Store (more accurate) result in transpositionTable
         if value <= oldAlpha
             transpositionTable[grid] = value, UPPER, depth, bestTurn

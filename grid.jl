@@ -184,6 +184,41 @@ function heuristic(grid::Array)::Array{Float64}
     return freeSpaces
 end
 
+function heuristic2(grid::Array)::Array{Float64}
+    # idea: go over the array and count the free spaces for every player
+    # TODO calc num of safe groups : a safe group exists when the stones have no free neighbors and borders with its own color
+    freeSpaces = [0.0, 0.0]
+    safeHexes = [Array{Tuple{Int,Int}, 1}(), Array{Tuple{Int, Int}, 1}()]
+    safeGroups = [1.0, 1.0]
+
+    gridSize = size(grid)[1]
+    for row = 1:gridSize
+        for col = 1:gridSize
+            gridValue = getGridValue(grid, row, col)
+            if gridValue == 0
+                break
+            elseif gridValue > 1
+                numFree = getNumFreeNeighbors(grid, row, col)
+                freeSpaces[gridValue-1] += numFree
+                if numFree == 0
+                    push!(safeHexes[gridValue-1], (row, col))
+                    # check if it has neighbors of same color group / add somewhere
+                end
+            end
+        end
+    end
+    ## Look in safeHexes and find safe groups
+    println(safeHexes)
+    for playerHexes in safeHexes
+        checkSafeHexes(grid, playerHexes)
+    end
+    return freeSpaces
+end
+
+function checkSafeHexes(grid::Array, safeHexes::Array{Tuple{Int}})
+    # look at entry (remove it?): check if neighbors are in list and repeat for them
+end
+
 # calculates the size of the group of the value
 # NOTE: THIS CHANGES THE GIVEN ARRAY!!!
 function checkGroup(hexgrid::Array, row::Int, col::Int, value::Int8)::Float64
@@ -213,32 +248,47 @@ end
 # d[1] = "my"
 # d[1] = "toast"
 # println(d)
-# const global PLAYERCOLORS = ["\U2715", "\U25B3", "\U26C4", "\U2661"]
-# grid = initializeGrid(5)
-# setGridValue!(grid, 1, 1, 2)
-# setGridValue!(grid, 1, 2, 2)
-# setGridValue!(grid, 1, 3, 2)
-# setGridValue!(grid, 1, 5, 2)
-# setGridValue!(grid, 2, 6, 2)
-# setGridValue!(grid, 3, 1, 2)
-# setGridValue!(grid, 3, 2, 2)
-# setGridValue!(grid, 5, 1, 2)
-# setGridValue!(grid, 5, 4, 3)
-# setGridValue!(grid, 5, 5, 3)
-# setGridValue!(grid, 5, 6, 3)
-# setGridValue!(grid, 6, 3, 3)
-# setGridValue!(grid, 7, 1, 3)
-# setGridValue!(grid, 7, 2, 3)
-# setGridValue!(grid, 9, 3, 3)
-# setGridValue!(grid, 9, 4, 3)
-# printBoard(grid)
-# # # @time calculateScores(grid, 2)
+const global PLAYERCOLORS = ["\U2715", "\U25B3", "\U26C4", "\U2661"]
+grid = initializeGrid(5)
+setGridValue!(grid, 1, 1, 2)
+setGridValue!(grid, 1, 2, 2)
+setGridValue!(grid, 1, 3, 2)
+setGridValue!(grid, 1, 5, 2)
+setGridValue!(grid, 2, 6, 2)
+setGridValue!(grid, 3, 1, 2)
+setGridValue!(grid, 3, 2, 2)
+setGridValue!(grid, 5, 1, 2)
+
+setGridValue!(grid, 2, 1, 3)
+setGridValue!(grid, 2, 2, 3)
+setGridValue!(grid, 2, 3, 3)
+setGridValue!(grid, 2, 4, 3)
+setGridValue!(grid, 2, 5, 3)
+setGridValue!(grid, 3, 6, 3)
+setGridValue!(grid, 3, 7, 3)
+setGridValue!(grid, 1, 4, 3)
+setGridValue!(grid, 5, 4, 3)
+setGridValue!(grid, 5, 5, 3)
+setGridValue!(grid, 5, 6, 3)
+setGridValue!(grid, 6, 3, 3)
+setGridValue!(grid, 7, 1, 3)
+setGridValue!(grid, 7, 2, 3)
+setGridValue!(grid, 9, 3, 3)
+setGridValue!(grid, 9, 4, 3)
+printBoard(grid)
 # @time getNumFreeNeighbors(grid, 1 , 3)
 # println(getNumFreeNeighbors(grid, 1, 3))
 # @time getNeighbors(grid, 5, 5)
 # println("Neighbors of 5 5: ", getNeighbors(grid, 5, 5))
-# println("Scores: ", calculateScores(grid, 2))
-# println("heuristic: ", heuristic(grid))
+@time calculateScores(grid, 2)
+@time calculateScores(grid, 2)
+println("Scores: ", calculateScores(grid, 2))
+@time heuristic(grid)
+@time heuristic(grid)
+println("heuristic: ", heuristic(grid))
+@time heuristic2(grid)
+@time heuristic2(grid)
+println("heuristic2: ", heuristic2(grid))
 # posMoves = [[1,1],[1,2],[1,3],[2,1],[2,2],[2,3]]
 # posTurns = [[i, j] for i in posMoves for j in posMoves if i!=j]
 # println("Length: ", length(posTurns))

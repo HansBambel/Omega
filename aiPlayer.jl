@@ -19,6 +19,7 @@ time is the time left to compute
 function makeSmartTurn(grid::Array, player::Int, timeLeft::Float64)
     # TODO make smart time management (when the game is more advanced it requires less time to search)
     # --> in the beginning do bigger search, later less needed
+    # TODO in the beginning of the game maybe use a fixed set of moves so we dont waste time for shallow search
     bestTurn = iterativeDeepening(grid, player, timeLeft)
 
     # get the best move and play it

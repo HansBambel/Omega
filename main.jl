@@ -28,10 +28,27 @@ elseif length(ARGS) == 2
 end
 
 hexgrid = initializeGrid(gridSize)
+# setGridValue!(hexgrid, 1, 1, 2)
+# setGridValue!(hexgrid, 1, 2, 2)
+# setGridValue!(hexgrid, 1, 3, 2)
+# setGridValue!(hexgrid, 1, 5, 2)
+# setGridValue!(hexgrid, 2, 6, 2)
+# setGridValue!(hexgrid, 3, 1, 2)
+# setGridValue!(hexgrid, 3, 2, 2)
+# setGridValue!(hexgrid, 5, 1, 2)
+#
+# setGridValue!(hexgrid, 5, 4, 3)
+# setGridValue!(hexgrid, 5, 5, 3)
+# setGridValue!(hexgrid, 5, 6, 3)
+# setGridValue!(hexgrid, 6, 3, 3)
+# setGridValue!(hexgrid, 7, 1, 3)
+# setGridValue!(hexgrid, 7, 2, 3)
+# setGridValue!(hexgrid, 9, 3, 3)
+# setGridValue!(hexgrid, 9, 4, 3)
 printBoard(hexgrid)
 
 ### This is the time the AI is allowed to have
-totalTurnTime = 2*60
+totalTurnTime = 2*60.0
 totalTurns = countNum(1, hexgrid) ÷ numPlayers
 aiTurns = totalTurns ÷ 2
 # TODO this time assumes every turn needs the same amount
@@ -42,6 +59,7 @@ timePerTurn = totalTurnTime / aiTurns
 
 timeAIneeded = 0
 turn = 0
+history = Array()
 while(!gameOver(hexgrid, numPlayers))
     # each player after the other
     for p in 1:numPlayers
@@ -53,6 +71,7 @@ while(!gameOver(hexgrid, numPlayers))
         elseif (players[p] == 'a') | (players[p] == 'A')
             println("####   TURN ", turn, ": AI PLAYER ", PLAYERCOLORS[p], "   ####")
             timeForTurn = @elapsed makeSmartTurn(hexgrid, p, timePerTurn)
+            # timeForTurn = @elapsed makeSmartTurn(hexgrid, p, totalTurnTime-timeAIneeded)
             global timeAIneeded += timeForTurn
             println("AI needed ", timeForTurn, "s of its given ", timePerTurn, "s")
         elseif (players[p] == 'h') | (players[p] == 'H')

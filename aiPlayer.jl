@@ -50,6 +50,7 @@ function iterativeDeepening(grid, player::Int, timeLeft::Float64)::Array{Array{I
     timeElapsed = 0.0
     # number of turns left: length(posMoves) ÷ 2
     println("Turns left: ", length(posMoves) ÷ 2)
+    println("Possible turns: ", length(posTurns))
     while (timeElapsed < timeLeft) & (maxDepth <= length(posMoves) ÷ 2)
         # do alpha-beta-search
         # do a copy of the grid and run alphaBetaSearch on it
@@ -59,9 +60,8 @@ function iterativeDeepening(grid, player::Int, timeLeft::Float64)::Array{Array{I
         initAlpha = -Inf
         initBeta = Inf
         startTime = time_ns()
-        println("Possible turns at depth ", maxDepth, ": ", length(posTurns))
         newValue = alphaBetaSearch(grid, transpositionTable, player, initAlpha, initBeta, maxDepth, posTurns, timeLeft-timeElapsed)
-
+        println("Best value: ", newValue)
         println("Depth ", maxDepth, " took ", (time_ns()-startTime)/1.0e9,"s")
         # Write in hashmap
         # println("error after alphaBetaSearch")
@@ -117,8 +117,10 @@ function alphaBetaSearch(grid,
     # TODO IS THIS ^ ALREADY TURNORDERING?
 
     # if no possible move --> gameover (terminal state)
-    # if gameOver(grid, 2)
-    if length(posTurns) < 2
+    # if grid.gameOver(2)
+    if grid.getNumPosMoves() < 2
+        # println("Game over --> Eval Board")
+        # println("possibleMoves: ", grid.getNumPosMoves())
         scores = grid.calculateScores(2)
         return scores[player]-scores[otherPlayer]
     # not yet finished, but max search depth

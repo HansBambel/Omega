@@ -78,10 +78,8 @@ function Grid()
             return 0
         else
             # TODO introduce a GROUPS variable that gets updated?
-            # update hash
+            # update hash: current XOR old value XOR new value
             # remove old value from hashvalue and add new one
-            # println(hashArray)
-            # println(hashArray[1,1,1])
             currentHash = currentHash ⊻ hashArray[row, col, getGridValue(row, col)]
             currentHash = currentHash ⊻ hashArray[row, col, value]
 
@@ -99,6 +97,10 @@ function Grid()
 
     function getHash()
         return currentHash
+    end
+
+    function getNumPosMoves()
+        return numPossibleMoves
     end
 
     function printArray()
@@ -303,6 +305,7 @@ function Grid()
 
     # these functions will be exported
     () -> (getArray;
+           getNumPosMoves;
            initializeGrid;
            getGridValue;
            setGridValue!;

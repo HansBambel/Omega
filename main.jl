@@ -57,7 +57,6 @@ aiTurns = totalTurns ÷ 2
 # NOTE later AI needs only a little bit of time because he doesn't need to look deep
 # the last 4 turns can be calculated within 1s
 timePerTurn = totalTurnTime / aiTurns
-
 timeAIneeded = 0
 turn = 0
 while(!hexgrid.gameOver(numPlayers))
@@ -78,6 +77,8 @@ while(!hexgrid.gameOver(numPlayers))
             println("####   TURN ", turn, ": HUMAN PLAYER ", PLAYERCOLORS[p], "   ####")
             makeTurn(hexgrid, numPlayers)
         end
+        println("Current Score: ", hexgrid.calculateScores(numPlayers)[1:numPlayers])
+        println("Current Heuristic: ", hexgrid.heuristic())
     end
 end
 

@@ -75,6 +75,7 @@ function setGridValue!(grid::Array, row::Int, col::Int, value)
     else
         grid[row, col+max(0, offset-(row-1))] = value
         # TODO introduce a GROUPS variable that gets updated?
+        # TODO unionfind
         return grid
     end
 end
@@ -142,7 +143,7 @@ function calculateScores(hexgrid::Array, numPlayers)::Array{Float64}
                 if gridValue == 0
                     break
                 elseif gridValue > 1
-                    scores[gridValue-1] *= checkGroup(grid, row, col, gridValue)
+                    scores[gridValue-1] *= checkGroup(grid, row, col, gridValue)#, [[0,0]])
                     # check if neighbors belong to same group and make this field free
                 end
             end
@@ -187,6 +188,7 @@ end
 function heuristic2(grid::Array)::Array{Float64}
     # idea: go over the array and count the free spaces for every player
     # TODO calc num of safe groups : a safe group exists when the stones have no free neighbors and borders with its own color
+    # TODO have a counter for the groupsize
     freeSpaces = [0.0, 0.0]
     safeHexes = [Array{Tuple{Int,Int}, 1}(), Array{Tuple{Int, Int}, 1}()]
     safeGroups = [1.0, 1.0]
@@ -215,7 +217,7 @@ function heuristic2(grid::Array)::Array{Float64}
     return freeSpaces
 end
 
-function checkSafeHexes(grid::Array, safeHexes::Array{Tuple{Int}})
+function checkSafeHexes(grid::Array, safeHexes::Array{Tuple{Int, Int}})
     # look at entry (remove it?): check if neighbors are in list and repeat for them
 end
 
@@ -239,6 +241,25 @@ function checkGroup(hexgrid::Array, row::Int, col::Int, value::Int8)::Float64
     end
 end
 
+function checkGroup(hexgrid::Array, row::Int, col::Int, value::Int8, seen::Array)::Float64
+    # if the new field is not of the same player --> stop
+    if (getGridValue(hexgrid, row, col) != value) | ([row, col] in seen)
+        return 0.0
+    else # otherwise set it free and look whether there are more belonging to the group
+        # TODO check whether calculations are still correct in big groups
+        # --> may overwrite each other
+        # grid = copy(hexgrid)
+        push!(seen, [row, col])
+        # println("seen:", seen)
+        groupSize = 0.0
+        neighbors = getNeighbors(hexgrid, row, col)
+        for n in neighbors
+            groupSize += checkGroup(hexgrid, n[1], n[2], value, seen)
+        end
+        return 1.0 + groupSize
+    end
+end
+
 # startTime = time_ns()
 # sleep(1)
 # println((time_ns()-startTime)/1.0e9)
@@ -248,47 +269,50 @@ end
 # d[1] = "my"
 # d[1] = "toast"
 # println(d)
-const global PLAYERCOLORS = ["\U2715", "\U25B3", "\U26C4", "\U2661"]
-grid = initializeGrid(5)
-setGridValue!(grid, 1, 1, 2)
-setGridValue!(grid, 1, 2, 2)
-setGridValue!(grid, 1, 3, 2)
-setGridValue!(grid, 1, 5, 2)
-setGridValue!(grid, 2, 6, 2)
-setGridValue!(grid, 3, 1, 2)
-setGridValue!(grid, 3, 2, 2)
-setGridValue!(grid, 5, 1, 2)
-
-setGridValue!(grid, 2, 1, 3)
-setGridValue!(grid, 2, 2, 3)
-setGridValue!(grid, 2, 3, 3)
-setGridValue!(grid, 2, 4, 3)
-setGridValue!(grid, 2, 5, 3)
-setGridValue!(grid, 3, 6, 3)
-setGridValue!(grid, 3, 7, 3)
-setGridValue!(grid, 1, 4, 3)
-setGridValue!(grid, 5, 4, 3)
-setGridValue!(grid, 5, 5, 3)
-setGridValue!(grid, 5, 6, 3)
-setGridValue!(grid, 6, 3, 3)
-setGridValue!(grid, 7, 1, 3)
-setGridValue!(grid, 7, 2, 3)
-setGridValue!(grid, 9, 3, 3)
-setGridValue!(grid, 9, 4, 3)
-printBoard(grid)
-# @time getNumFreeNeighbors(grid, 1 , 3)
-# println(getNumFreeNeighbors(grid, 1, 3))
-# @time getNeighbors(grid, 5, 5)
-# println("Neighbors of 5 5: ", getNeighbors(grid, 5, 5))
-@time calculateScores(grid, 2)
-@time calculateScores(grid, 2)
-println("Scores: ", calculateScores(grid, 2))
-@time heuristic(grid)
-@time heuristic(grid)
-println("heuristic: ", heuristic(grid))
-@time heuristic2(grid)
-@time heuristic2(grid)
-println("heuristic2: ", heuristic2(grid))
+# const global PLAYERCOLORS = ["\U2715", "\U25B3", "\U26C4", "\U2661"]
+# grid = initializeGrid(5)
+# setGridValue!(grid, 1, 1, 2)
+# setGridValue!(grid, 1, 2, 2)
+# setGridValue!(grid, 1, 3, 2)
+# setGridValue!(grid, 1, 5, 2)
+# setGridValue!(grid, 2, 6, 2)
+# setGridValue!(grid, 3, 1, 2)
+# setGridValue!(grid, 3, 2, 2)
+# setGridValue!(grid, 5, 1, 2)
+#
+# setGridValue!(grid, 2, 1, 3)
+# setGridValue!(grid, 2, 2, 3)
+# setGridValue!(grid, 2, 3, 3)
+# setGridValue!(grid, 2, 4, 3)
+# setGridValue!(grid, 2, 5, 3)
+# setGridValue!(grid, 3, 6, 3)
+# setGridValue!(grid, 3, 7, 3)
+# setGridValue!(grid, 1, 4, 3)
+# setGridValue!(grid, 5, 4, 3)
+# setGridValue!(grid, 5, 5, 3)
+# setGridValue!(grid, 5, 6, 3)
+# setGridValue!(grid, 6, 3, 3)
+# setGridValue!(grid, 7, 1, 3)
+# setGridValue!(grid, 7, 2, 3)
+# setGridValue!(grid, 9, 3, 3)
+# setGridValue!(grid, 9, 4, 3)
+#
+# # println("CheckGroup ", checkGroup(grid, 7, 1, Int8(3)))
+# printBoard(grid)
+# println("CheckGroup ", checkGroup(grid, 7, 1, Int8(3), [[0,0]]))
+# # # @time getNumFreeNeighbors(grid, 1 , 3)
+# # # println(getNumFreeNeighbors(grid, 1, 3))
+# # # @time getNeighbors(grid, 5, 5)
+# # # println("Neighbors of 5 5: ", getNeighbors(grid, 5, 5))
+# @time calculateScores(grid, 2)
+# @time calculateScores(grid, 2)
+# println("Scores: ", calculateScores(grid, 2))
+# @time heuristic(grid)
+# @time heuristic(grid)
+# println("heuristic: ", heuristic(grid))
+# @time heuristic2(grid)
+# @time heuristic2(grid)
+# println("heuristic2: ", heuristic2(grid))
 # posMoves = [[1,1],[1,2],[1,3],[2,1],[2,2],[2,3]]
 # posTurns = [[i, j] for i in posMoves for j in posMoves if i!=j]
 # println("Length: ", length(posTurns))

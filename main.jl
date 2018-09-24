@@ -59,7 +59,7 @@ timePerTurn = totalTurnTime / aiTurns
 
 timeAIneeded = 0
 turn = 0
-history = Array()
+history = Array
 while(!gameOver(hexgrid, numPlayers))
     # each player after the other
     for p in 1:numPlayers

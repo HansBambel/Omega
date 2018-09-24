@@ -1,4 +1,4 @@
-include("grid.jl")
+include("gridObject.jl")
 include("humanPlayer.jl")
 include("randomPlayer.jl")
 include("aiPlayer.jl")
@@ -27,7 +27,8 @@ elseif length(ARGS) == 2
     numPlayers = length(players)
 end
 
-hexgrid = initializeGrid(gridSize)
+hexgrid = Grid()
+hexgrid.initializeGrid(gridSize)
 # setGridValue!(hexgrid, 1, 1, 2)
 # setGridValue!(hexgrid, 1, 2, 2)
 # setGridValue!(hexgrid, 1, 3, 2)
@@ -45,11 +46,11 @@ hexgrid = initializeGrid(gridSize)
 # setGridValue!(hexgrid, 7, 2, 3)
 # setGridValue!(hexgrid, 9, 3, 3)
 # setGridValue!(hexgrid, 9, 4, 3)
-printBoard(hexgrid)
+hexgrid.printBoard()
 
 ### This is the time the AI is allowed to have
 totalTurnTime = 2*60.0
-totalTurns = countNum(1, hexgrid) ÷ numPlayers
+totalTurns = countNum(1, hexgrid.getArray()) ÷ numPlayers
 aiTurns = totalTurns ÷ 2
 # TODO this time assumes every turn needs the same amount
 # idea: find out when/how deep the AI can look into endstate in a reasonable time
@@ -59,8 +60,7 @@ timePerTurn = totalTurnTime / aiTurns
 
 timeAIneeded = 0
 turn = 0
-history = Array
-while(!gameOver(hexgrid, numPlayers))
+while(!hexgrid.gameOver(numPlayers))
     # each player after the other
     for p in 1:numPlayers
         global turn += 1
@@ -86,7 +86,7 @@ if 'a' in players
     println("AI needed ", timeAIneeded, "s of its ", totalTurnTime, "s.")
 end
 println("### Game ended ###")
-scores = calculateScores(hexgrid, numPlayers)
+scores = hexgrid.calculateScores(numPlayers)
 println("Scores: ")
 for p in 1:numPlayers
     println(PLAYERCOLORS[p], " has scored: ", scores[p], " points")

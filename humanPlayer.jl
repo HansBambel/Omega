@@ -1,5 +1,5 @@
 
-function makeTurn(grid::Array, players::Int)
+function makeTurn(grid, players::Int)
     # for every player-color
     # ask for input and check whether it is a valid move
     for p in 1:players
@@ -15,16 +15,16 @@ function makeTurn(grid::Array, players::Int)
                 row, col = 0, 0
             end
             # if valid hexfield --> leave while-loop
-            if getGridValue(grid, row, col) == 1
+            if grid.getGridValue(row, col) == 1
                 break
             end
-            println("Please enter a valid Hexfield! It must be free and the indices between 1 and ", size(grid)[1], ".")
+            println("Please enter a valid Hexfield! It must be free and the indices between 1 and ", size(grid.getArray())[1], ".")
             # ask again
 
         end
-        setGridValue!(grid, row, col, p+1)
+        grid.setGridValue!(row, col, p+1)
         println(PLAYERCOLORS[p], " stone set on (", row, ", ", col, ")")
-        printBoard(grid)
+        grid.printBoard()
 
     end
 

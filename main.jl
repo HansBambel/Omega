@@ -67,6 +67,8 @@ while(!hexgrid.gameOver(numPlayers))
         if (players[p] == 'r') | (players[p] == 'R')
             println("####   TURN ", turn, ": RANDOM PLAYER ", PLAYERCOLORS[p], "   ####")
             makeRandomTurn(hexgrid, numPlayers)
+            # println("Current Groupsize: ", hexgrid.groupSize)
+            # break
         elseif (players[p] == 'a') | (players[p] == 'A')
             println("####   TURN ", turn, ": AI PLAYER ", PLAYERCOLORS[p], "   ####")
             timeForTurn = @elapsed makeSmartTurn(hexgrid, p, timePerTurn)
@@ -77,11 +79,16 @@ while(!hexgrid.gameOver(numPlayers))
             println("####   TURN ", turn, ": HUMAN PLAYER ", PLAYERCOLORS[p], "   ####")
             makeTurn(hexgrid, numPlayers)
         end
+        # println("Current Groups: ", hexgrid.groups)
+        # println("Current Groupsize: ", hexgrid.groupSize)
         println("Current Score: ", hexgrid.calculateScores(numPlayers)[1:numPlayers])
         println("Current Heuristic: ", hexgrid.heuristic())
+        # println("Total History: ", hexgrid.history)
     end
+    # break
 end
-
+println(hexgrid.groups)
+println(hexgrid.groupSize)
 println("Calculated TOTAL_TURNS: ", totalTurns)
 if 'a' in players
     println("AI needed ", timeAIneeded, "s of its ", totalTurnTime, "s.")

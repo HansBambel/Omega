@@ -227,6 +227,8 @@ function Grid()
        calculateScores;
        heuristic)
 end
+
+
     const global PLAYERCOLORS = ["\U2715", "\U25B3", "\U26C4", "\U2661"]
     myGrid = Grid()
     myGrid.initializeGrid(5)
@@ -251,6 +253,7 @@ end
     @time myGrid.calculateScores(2)
     @time myGrid.heuristic()
     myGrid.printBoard()
+
     # @time getNumFreeNeighbors(grid, 1 , 3)
     # println(getNumFreeNeighbors(grid, 1, 3))
     # @time getNeighbors(grid, 5, 5)

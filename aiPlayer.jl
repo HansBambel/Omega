@@ -26,6 +26,11 @@ function makeSmartTurn(grid, player::Int, timeLeft::Float64)
     grid.setGridValue!(bestTurn[1][1], bestTurn[1][2], 2)
     grid.setGridValue!(bestTurn[2][1], bestTurn[2][2], 3)
 
+    println("Finished smart turn")
+    # println(grid.history)
+    # grid.printBoard()
+    # println(grid.calculateScores(2))
+    # sleep(5)
     println(PLAYERCOLORS[1], " stone set on (", bestTurn[1][1], ", ", bestTurn[1][2], ")")
     println(PLAYERCOLORS[2], " stone set on (", bestTurn[2][1], ", ", bestTurn[2][2], ")")
     grid.printBoard()
@@ -67,7 +72,7 @@ function iterativeDeepening(grid, player::Int, timeLeft::Float64)::Array{Array{I
         # println("error after alphaBetaSearch")
         timeElapsed += (time_ns()-startTime)/1.0e9
         maxDepth += 1
-
+        break # TODO remove this (just for debugging)
     end
     # println("MaxDepth = ", maxDepth-1)
     end
@@ -114,7 +119,6 @@ function alphaBetaSearch(grid,
             end
         end
     end
-    # TODO IS THIS ^ ALREADY TURNORDERING?
 
     # if no possible move --> gameover (terminal state)
     # if grid.gameOver(2)
@@ -127,8 +131,8 @@ function alphaBetaSearch(grid,
     elseif depth <= 0
         # TODO come up with a good heuristic
         # return a heuristic-value ("AN ADMISSABLE HEURISTIC NEVER OVERESTIMATES!" - Helmar Gust)
-        approximation = grid.heuristic()
-        return approximation[otherPlayer] - approximation[player]
+        approximation = grid.calculateScores(2)
+        return approximation[player] - approximation[otherPlayer]
     # continue searching
     else
         startTime = time_ns()
@@ -152,14 +156,14 @@ function alphaBetaSearch(grid,
             alpha = max(alpha, value)
             # prune --> no need to look at the other children
             if alpha >= beta
-                grid.setGridValue!(turn[1][1], turn[1][2], 1)
                 grid.setGridValue!(turn[2][1], turn[2][2], 1)
+                grid.setGridValue!(turn[1][1], turn[1][2], 1)
                 break
             end
 
             # undo all the moves
-            grid.setGridValue!(turn[1][1], turn[1][2], 1)
             grid.setGridValue!(turn[2][1], turn[2][2], 1)
+            grid.setGridValue!(turn[1][1], turn[1][2], 1)
         end
 
         # println("Store the result")

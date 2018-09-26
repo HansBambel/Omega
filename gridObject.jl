@@ -1,5 +1,6 @@
 import Base:convert
 
+using Random
 using Printf
 using DataStructures
 
@@ -14,12 +15,16 @@ end
 
 
 function Grid()
-    grid = Array{Int8}
+    Random.seed!(42)
+    grid = Array{Int}
+    gridMapping = Dict{Array{Int, 1}, Int}()
     groups = Array{Int}
+    groupSize = Array{Int}
     offset = 0
     numPossibleMoves = 0
     currentHash = 1337
     hashArray = Array
+    history = Array{Array{Array{Array{Int64,1},1},1},1}(undef, 1)
 
     function getArray()
         return grid
@@ -27,20 +32,21 @@ function Grid()
 
     # The grid is saved as an array with default value 0. The allowed hexagons are where a 1 is.
     function initializeGrid(gridSize::Int)
-        grid = zeros(Int8, 2*gridSize-1,2*gridSize-1)
+        grid = zeros(Int, 2*gridSize-1,2*gridSize-1)
         hashArray = Array{Int64}(undef, 2*gridSize-1,2*gridSize-1,5)
         q_shift = gridSize-1
         for row in range(1, stop=size(grid)[1])
-            # print(q_shift)
+            mapCol = 1
             for col = max(1, q_shift+1):min(length(grid[row, :]),length(grid[row, :])+q_shift)
                 grid[row, col] = 1
                 numPossibleMoves += 1
+                gridMapping[[row, mapCol]] = numPossibleMoves
+                mapCol += 1
             end
             q_shift = q_shift - 1
         end
         offset = Int((size(grid)[1]-1)/2)
-        # TODO init hasharray
-        # print(hashArray)
+        # println(offset)
         for i = 1:2*gridSize-1
             for j = 1:2*gridSize-1
                 for k = 1:5
@@ -48,13 +54,18 @@ function Grid()
                 end
             end
         end
-        # hashArray = bitstring(hashArray)
         currentHash = rand(Int64)
-        # println(currentHash)
+        groups = [collect(1:numPossibleMoves), collect(1:numPossibleMoves)]
+        groupSize = [ones(Int, numPossibleMoves), ones(Int, numPossibleMoves)]
+        # pushfirst!(history, [groups, groupSize])
+        history = [deepcopy([groups, groupSize])]
+        # println("gridMapping ", gridMapping)
+        # println("groups ", groups)
+        # println("groupSize ", groupSize)
     end
 
     # getter for getting value of hexgrid
-    function getGridValue(row::Int, col::Int)::Int8
+    function getGridValue(row::Int, col::Int)::Int
         @assert row >= 0 "row can't be smaller than 0"
         @assert col >= 0 "col can't be smaller than 0"
         # if something is asked that is outside the grid
@@ -80,20 +91,88 @@ function Grid()
             # TODO introduce a GROUPS variable that gets updated?
             # update hash: current XOR old value XOR new value
             # remove old value from hashvalue and add new one
-            currentHash = currentHash ⊻ hashArray[row, col, getGridValue(row, col)]
+            oldValue = getGridValue(row, col)
+            currentHash = currentHash ⊻ hashArray[row, col, oldValue]
             currentHash = currentHash ⊻ hashArray[row, col, value]
 
             grid[row, col+max(0, offset-(row-1))] = value
+            # println(length(history))
+            # sleep(1)
+            # println(history)
             if value > 1
-                # TODO unionfind
+                # look at neighbors and unify the ones with the same value --> unionfind
                 numPossibleMoves -= 1
+                unifySameNeighbors([row, col], value)
+                # save this to history
+                push!(history, [deepcopy(groups), deepcopy(groupSize)])
+                # println([row, col], " Value: ", value)
+                # println("####   PUSHED INTO HISTORY:   ####")
+                # println(deepcopy(groups))
             else
-                # TODO unionfind delete
+                # delete the latest entry of history and get the previous one again
+                # println("##### POPPED FROM HISTORY   ####")
+                # println(pop!(history))
+                pop!(history)
+                previousEntry = last(history)
+                # println("##### NOW LATEST HISTORY   ####")
+                # println(previousEntry)
+                groups, groupSize = previousEntry[1], previousEntry[2]
+                # println(groups)
                 numPossibleMoves += 1
             end
+            # println("Length of history: ", length(history))
             return grid
         end
     end
+
+    function unifySameNeighbors(hexfield::Array{Int}, value::Int)
+        neighbors = getNeighbors(hexfield[1], hexfield[2])
+        sameNeighbors = [n for n in neighbors if getGridValue(n[1], n[2]) == value]
+        # if length(sameNeighbors) > 2
+        #     println("Same neighbors of ", hexfield, " are: ", sameNeighbors)
+        # end
+        for n in sameNeighbors
+            # if they are not yet connected: unify them
+            # if find(gridMapping[hexfield], value-1) != find(gridMapping[n], value-1)
+            union(hexfield, n, value-1)
+            # end
+        end
+        # println("New group:", groups)
+        # println("groupsize: ", groupSize)
+    end
+
+    function union(x::Array{Int}, y::Array{Int}, player::Int)
+        xRoot = find(gridMapping[x], player)
+        # println("Found xroot: ", xRoot, " size: ", groupSize[player][xRoot])
+        yRoot = find(gridMapping[y], player)
+        # println("Found yroot: ", yRoot, " size: ", groupSize[player][yRoot])
+
+        if xRoot == yRoot
+            return
+        end
+        # if y is the bigger group --> swap
+        if groupSize[player][xRoot] < groupSize[player][yRoot]
+            xRoot, yRoot = yRoot, xRoot
+        end
+        # println("Unified xRoot ", xRoot, " with yRoot ", yRoot)
+        groups[player][yRoot] = xRoot
+        groupSize[player][xRoot] = groupSize[player][xRoot]+groupSize[player][yRoot]
+        groupSize[player][yRoot] = 1
+    end
+
+    function find(x::Int, player::Int)::Int
+        # if groups[player][x] != x
+        #     groups[player][x] = find(groups[player][x], player)
+        # end
+        while groups[player][x] != x
+            next = groups[player][x]
+            groups[player][x] = groups[player][next]
+            x = next
+            # x, groups[player][x] = groups[player][x], groups[player][groups[player][x]]
+        end
+        return x
+    end
+
 
     function getHash()
         return currentHash
@@ -160,10 +239,10 @@ function Grid()
         # The order is the following: left, right, top left, top right, bottom left, bottom right
         IN = [[ 0, -1],                    # left
               [ 0,  1],                    # right
-              [-1, -1*Int(row <= offset)], # top left
-              [-1,  1*Int(row > offset)],  # top right
-              [ 1, -1*Int(row >= offset)], # bottom left
-              [ 1,  1*Int(row < offset)]]  # bottom right
+              [-1, -1*Int(row <= offset+1)], # top left
+              [-1,  1*Int(row > offset+1)],  # top right
+              [ 1, -1*Int(row > offset)], # bottom left
+              [ 1,  1*Int(row <= offset)]]  # bottom right
         neighbors = [[row+IN[1][1], col+IN[1][2]],
                      [row+IN[2][1], col+IN[2][2]],
                      [row+IN[3][1], col+IN[3][2]],
@@ -174,10 +253,8 @@ function Grid()
         return neighbors
     end
 
-    # TODO THIS IS CALCULATED WRONG
-    function calculateScores(numPlayers)::Array{Float64}
+    function calculateScoresOld(numPlayers)::Array{Float64}
         scores = [1.0, 1.0, 1.0, 1.0]
-        # create a copy of the current grid and check groups
         seen = [[]]
         gridSize = size(grid)[1]
         for row = 1:gridSize
@@ -191,6 +268,22 @@ function Grid()
                 end
             end
         end
+        return scores
+    end
+
+    function calculateScores(numPlayers)::Array{Float64}
+        scores = [1.0, 1.0, 1.0, 1.0]
+        # println("Set1: ", Set(groups[1]))
+        # group1 = [find(g, 1) for g in Set(groups[1])]
+        # group2 = [find(g, 2) for g in Set(groups[2])]
+        # println([find(g, 1) for g in Set(groups[1])])
+        # [find(g, 1) for g in groups[1]]
+        # [find(g, 2) for g in groups[2]]
+        # println(typeof(Set(groups[1])))
+        # println(groupSize[1])
+        # println("Is node 12 in the same set as 3? ", find(12, 1) == find(3, 1))
+        scores[1] = prod([groupSize[1][g] for g in Set(groups[1])])
+        scores[2] = prod([groupSize[2][g] for g in Set(groups[2])])
         return scores
     end
 
@@ -264,27 +357,7 @@ function Grid()
         # look at entry (remove it?): check if neighbors are in list and repeat for them
     end
 
-    # calculates the size of the group of the value
-    # NOTE: THIS CHANGES THE GIVEN ARRAY!!!
-    # function checkGroup(row::Int, col::Int, value::Int8)::Float64
-    #     # if the new field is not of the same player --> stop
-    #     if getGridValue(row, col) != value
-    #         return 0.0
-    #     else # otherwise set it free and look whether there are more belonging to the group
-    #         # TODO check whether calculations are still correct in big groups
-    #         # --> may overwrite each other
-    #         # grid = copy(hexgrid)
-    #         setGridValue!(row, col, 1)
-    #         groupSize = 0.0
-    #         neighbors = getNeighbors(row, col)
-    #         for n in neighbors
-    #             groupSize += checkGroup(n[1], n[2], value)
-    #         end
-    #         return 1.0 + groupSize
-    #     end
-    # end
-
-    function checkGroup(row::Int, col::Int, value::Int8, seen::Array)::Float64
+    function checkGroup(row::Int, col::Int, value::Int, seen::Array)::Float64
         # if the new field is not of the same player --> stop
         if (getGridValue(row, col) != value) | ([row, col] in seen)
             return 0.0
@@ -294,12 +367,12 @@ function Grid()
             # grid = copy(hexgrid)
             push!(seen, [row, col])
             # println("seen:", seen)
-            groupSize = 0.0
+            size = 0.0
             neighbors = getNeighbors(row, col)
             for n in neighbors
-                groupSize += checkGroup(n[1], n[2], value, seen)
+                size += checkGroup(n[1], n[2], value, seen)
             end
-            return 1.0 + groupSize
+            return 1.0 + size
         end
     end
 
@@ -317,24 +390,93 @@ function Grid()
            calculateScores;
            heuristic;
            checkGroup;
-           getHash)
+           getHash;
+           groups;
+           groupSize;
+           history)
 end
 
 # const global PLAYERCOLORS = ["\U2715", "\U25B3", "\U26C4", "\U2661"]
 # myGrid = Grid()
 # myGrid.initializeGrid(5)
-# println(myGrid.getHash())
+# # myGrid.setGridValue!(1, 1, 1)
+# myGrid.setGridValue!(2, 2, 2)
+# myGrid.setGridValue!(1, 2, 3)
+# println(myGrid.calculateScores(2))
+#
+# myGrid.setGridValue!(7, 3, 2)
+# myGrid.setGridValue!(4, 7, 3)
+# println(myGrid.calculateScores(2))
+#
+# myGrid.setGridValue!(4, 3, 2)
+# myGrid.setGridValue!(3, 1, 3)
+# println(myGrid.calculateScores(2))
+#
+# myGrid.setGridValue!(6, 4, 2)
+# myGrid.setGridValue!(4, 5, 3)
+# println(myGrid.calculateScores(2))
+#
+# myGrid.setGridValue!(2, 5, 2)
+# myGrid.setGridValue!(6, 3, 3)
+# println(myGrid.calculateScores(2))
+#
 # myGrid.setGridValue!(1, 1, 2)
-# println(myGrid.getHash())
-# myGrid.setGridValue!(1, 1, 1)
-# println(myGrid.getHash())
-# myGrid.setGridValue!(1, 2, 2)
-# myGrid.setGridValue!(1, 3, 2)
-# myGrid.setGridValue!(1, 5, 2)
-# myGrid.setGridValue!(2, 6, 2)
-# myGrid.setGridValue!(3, 1, 2)
+# myGrid.setGridValue!(7, 2, 3)
+# println(myGrid.calculateScores(2))
+#
+# myGrid.setGridValue!(7, 1, 2)
+# myGrid.setGridValue!(4, 4, 3)
+# println(myGrid.calculateScores(2))
+#
 # myGrid.setGridValue!(3, 2, 2)
+# myGrid.setGridValue!(5, 1, 3)
+# println(myGrid.calculateScores(2))
+# println(myGrid.groupSize)
+#
+# myGrid.setGridValue!(2, 1, 2)
+# myGrid.setGridValue!(5, 3, 3)
+# println(myGrid.calculateScores(2))
+# println(myGrid.groupSize)
+# myGrid.printBoard()
+# println()
+# println("Undoing the previous moves")
+# myGrid.setGridValue!(5, 3, 1)
+# myGrid.setGridValue!(2, 1, 1)
+# println(myGrid.calculateScores(2))
+# println(myGrid.groupSize)
+# myGrid.setGridValue!(5, 1, 1)
+# myGrid.setGridValue!(3, 2, 1)
+# println(myGrid.calculateScores(2))
+# myGrid.setGridValue!(4, 4, 1)
+# myGrid.setGridValue!(7, 1, 1)
+# println(myGrid.calculateScores(2))
+# myGrid.printBoard()
+# println()
+# println("Do another one")
+# myGrid.setGridValue!(5, 4, 2)
+# myGrid.setGridValue!(4, 6, 3)
+# println(myGrid.calculateScores(2))
+# println(myGrid.groups)
+# println(myGrid.groupSize)
+# myGrid.printBoard()
+
+# println(myGrid.groupSize)
+
+# myGrid.setGridValue!(1, 5, 2)
 # myGrid.setGridValue!(5, 1, 2)
+# myGrid.setGridValue!(5, 2, 2)
+# myGrid.setGridValue!(4, 4, 2)
+# myGrid.setGridValue!(4, 5, 2)
+# myGrid.setGridValue!(5, 3, 2)
+# myGrid.setGridValue!(3, 1, 2)
+# myGrid.setGridValue!(1, 4, 2)
+# myGrid.setGridValue!(9, 1, 2)
+# myGrid.setGridValue!(9, 2, 2)
+# myGrid.setGridValue!(3, 2, 2)
+# # @time myGrid.setGridValue!(2, 2, 2)
+# myGrid.printBoard()
+# println(myGrid.calculateScores(2))
+#
 # myGrid.setGridValue!(5, 4, 3)
 # myGrid.setGridValue!(5, 5, 3)
 # myGrid.setGridValue!(5, 6, 3)
@@ -344,58 +486,4 @@ end
 # myGrid.setGridValue!(9, 3, 3)
 # myGrid.setGridValue!(9, 4, 3)
 # myGrid.printBoard()
-# myGrid.calculateScores(2)
-# @time myGrid.calculateScores(2)
-# @time myGrid.calculateScores(2)
-# println(myGrid.checkGroup(1, 1, Int8(2), [[0,0]]))
-# println(myGrid.checkGroup(1, 4, Int8(2), [[0,0]]))
 # println(myGrid.calculateScores(2))
-# @time myGrid.heuristic()
-# @time myGrid.heuristic()
-# myGrid.printBoard()
-# setGridValue!(grid, 1, 1, 2)
-# setGridValue!(grid, 1, 2, 2)
-# setGridValue!(grid, 1, 3, 2)
-# setGridValue!(grid, 1, 5, 2)
-# setGridValue!(grid, 2, 6, 2)
-# setGridValue!(grid, 3, 1, 2)
-# setGridValue!(grid, 3, 2, 2)
-# setGridValue!(grid, 5, 1, 2)
-#
-# setGridValue!(grid, 2, 1, 3)
-# setGridValue!(grid, 2, 2, 3)
-# setGridValue!(grid, 2, 3, 3)
-# setGridValue!(grid, 2, 4, 3)
-# setGridValue!(grid, 2, 5, 3)
-# setGridValue!(grid, 3, 6, 3)
-# setGridValue!(grid, 3, 7, 3)
-# setGridValue!(grid, 1, 4, 3)
-# setGridValue!(grid, 5, 4, 3)
-# setGridValue!(grid, 5, 5, 3)
-# setGridValue!(grid, 5, 6, 3)
-# setGridValue!(grid, 6, 3, 3)
-# setGridValue!(grid, 7, 1, 3)
-# setGridValue!(grid, 7, 2, 3)
-# setGridValue!(grid, 9, 3, 3)
-# setGridValue!(grid, 9, 4, 3)
-#
-# # println("CheckGroup ", checkGroup(grid, 7, 1, Int8(3)))
-# printBoard(grid)
-# println("CheckGroup ", checkGroup(grid, 7, 1, Int8(3), [[0,0]]))
-# # # @time getNumFreeNeighbors(grid, 1 , 3)
-# # # println(getNumFreeNeighbors(grid, 1, 3))
-# # # @time getNeighbors(grid, 5, 5)
-# # # println("Neighbors of 5 5: ", getNeighbors(grid, 5, 5))
-# @time calculateScores(grid, 2)
-# @time calculateScores(grid, 2)
-# println("Scores: ", calculateScores(grid, 2))
-# @time heuristic(grid)
-# @time heuristic(grid)
-# println("heuristic: ", heuristic(grid))
-# @time heuristic2(grid)
-# @time heuristic2(grid)
-# println("heuristic2: ", heuristic2(grid))
-# posMoves = [[1,1],[1,2],[1,3],[2,1],[2,2],[2,3]]
-# posTurns = [[i, j] for i in posMoves for j in posMoves if i!=j]
-# println("Length: ", length(posTurns))
-# println(posTurns)

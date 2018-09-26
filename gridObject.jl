@@ -46,7 +46,6 @@ function Grid()
             q_shift = q_shift - 1
         end
         offset = Int((size(grid)[1]-1)/2)
-        # println(offset)
         for i = 1:2*gridSize-1
             for j = 1:2*gridSize-1
                 for k = 1:5
@@ -57,11 +56,7 @@ function Grid()
         currentHash = rand(Int64)
         groups = [collect(1:numPossibleMoves), collect(1:numPossibleMoves)]
         groupSize = [ones(Int, numPossibleMoves), ones(Int, numPossibleMoves)]
-        # pushfirst!(history, [groups, groupSize])
         history = [deepcopy([groups, groupSize])]
-        # println("gridMapping ", gridMapping)
-        # println("groups ", groups)
-        # println("groupSize ", groupSize)
     end
 
     # getter for getting value of hexgrid
@@ -88,7 +83,6 @@ function Grid()
         elseif col+max(0, offset-(row-1)) > size(grid)[2]
             return 0
         else
-            # TODO introduce a GROUPS variable that gets updated?
             # update hash: current XOR old value XOR new value
             # remove old value from hashvalue and add new one
             oldValue = getGridValue(row, col)
@@ -96,31 +90,19 @@ function Grid()
             currentHash = currentHash ⊻ hashArray[row, col, value]
 
             grid[row, col+max(0, offset-(row-1))] = value
-            # println(length(history))
-            # sleep(1)
-            # println(history)
             if value > 1
                 # look at neighbors and unify the ones with the same value --> unionfind
                 numPossibleMoves -= 1
                 unifySameNeighbors([row, col], value)
                 # save this to history
                 push!(history, [deepcopy(groups), deepcopy(groupSize)])
-                # println([row, col], " Value: ", value)
-                # println("####   PUSHED INTO HISTORY:   ####")
-                # println(deepcopy(groups))
             else
                 # delete the latest entry of history and get the previous one again
-                # println("##### POPPED FROM HISTORY   ####")
-                # println(pop!(history))
                 pop!(history)
                 previousEntry = deepcopy(last(history))
-                # println("##### NOW LATEST HISTORY   ####")
-                # println(previousEntry)
                 groups, groupSize = previousEntry[1], previousEntry[2]
-                # println(groups)
                 numPossibleMoves += 1
             end
-            # println("Length of history: ", length(history))
             return grid
         end
     end
@@ -128,15 +110,8 @@ function Grid()
     function unifySameNeighbors(hexfield::Array{Int}, value::Int)
         neighbors = getNeighbors(hexfield[1], hexfield[2])
         sameNeighbors = [n for n in neighbors if getGridValue(n[1], n[2]) == value]
-        # if length(sameNeighbors) > 2
-        #     println("Same neighbors of ", hexfield, " are: ", sameNeighbors)
-        # end
         for n in sameNeighbors
-            # if they are not yet connected: unify them
-            # if find(gridMapping[hexfield], value-1) != find(gridMapping[n], value-1)
-            # println("hexfield: ", hexfield, " n: ", n)
             union(hexfield, n, value-1)
-            # end
         end
         # println("New group:", groups)
         # println("groupsize: ", groupSize)
@@ -148,6 +123,7 @@ function Grid()
         yRoot = find(gridMapping[y], player)
         # println("Found yroot: ", yRoot, " size: ", groupSize[player][yRoot])
 
+        # if they are already in the same set --> stop
         if xRoot == yRoot
             return
         end
@@ -155,27 +131,18 @@ function Grid()
         if groupSize[player][xRoot] < groupSize[player][yRoot]
             xRoot, yRoot = yRoot, xRoot
         end
-        # println("Unified xRoot ", xRoot, " with yRoot ", yRoot)
         groups[player][yRoot] = xRoot
         groupSize[player][xRoot] = groupSize[player][xRoot]+groupSize[player][yRoot]
-        groupSize[player][yRoot] = 1
+        groupSize[player][yRoot] = 1 # need to set the smaller groups size to one for score calculation
     end
 
     function find(x::Int, player::Int)::Int
-        # if groups[player][x] != x
-        #     groups[player][x] = find(groups[player][x], player)
-        # end
-        # return groups[player][x]
         # path splitting:
         while groups[player][x] != x
-            # next = groups[player][x]
-            # groups[player][x] = groups[player][next]
-            # x = next
             x, groups[player][x] = groups[player][x], groups[player][groups[player][x]]
         end
         return x
     end
-
 
     function getHash()
         return currentHash
@@ -216,7 +183,6 @@ function Grid()
 
     # check whether another round can be played
     function gameOver(players::Int)::Bool
-        # println("Free hexes: ", freeHexagons, " needed Moves: ", players^2)
         return numPossibleMoves < players^2
     end
 
@@ -256,24 +222,6 @@ function Grid()
         return neighbors
     end
 
-    function calculateScoresOld(numPlayers)::Array{Float64}
-        scores = [1.0, 1.0, 1.0, 1.0]
-        seen = [[]]
-        gridSize = size(grid)[1]
-        for row = 1:gridSize
-            for col = 1:gridSize
-                gridValue = getGridValue(row, col)
-                if gridValue == 0
-                    break
-                elseif gridValue > 1
-                    scores[gridValue-1] *= max(1, checkGroup(row, col, gridValue, seen))
-                    # check if neighbors belong to same group and make this field free
-                end
-            end
-        end
-        return scores
-    end
-
     function calculateScores(numPlayers)::Array{Float64}
         scores = [1.0, 1.0, 1.0, 1.0]
         # println("Set1: ", Set(groups[1]))
@@ -305,49 +253,11 @@ function Grid()
     function heuristic()::Array{Float64}
         # idea: go over the array and count the free spaces for every player
         # TODO calc num of safe groups : a safe group exists when the stones have no free neighbors and borders with its own color
-        freeSpaces = [0.0, 0.0, 0.0]
-
-        gridSize = size(grid)[1]
-        for row = 1:gridSize
-            for col = 1:gridSize
-                gridValue = getGridValue(row, col)
-                if gridValue == 0
-                    break
-                end
-                numFree = getNumFreeNeighbors(row, col)
-                freeSpaces[gridValue] += numFree
-                if numFree == 0
-                    # check if it has neighbors of same color group / add somewhere
-                end
-            end
-        end
-        return freeSpaces
-    end
-
-    function heuristic2()::Array{Float64}
-        # idea: go over the array and count the free spaces for every player
-        # TODO calc num of safe groups : a safe group exists when the stones have no free neighbors and borders with its own color
-        # TODO have a counter for the groupsize
+        # use have a counter for the groupsize
         freeSpaces = [0.0, 0.0]
         safeHexes = [Array{Tuple{Int,Int}, 1}(), Array{Tuple{Int, Int}, 1}()]
         safeGroups = [1.0, 1.0]
 
-        gridSize = size(grid)[1]
-        for row = 1:gridSize
-            for col = 1:gridSize
-                gridValue = getGridValue(row, col)
-                if gridValue == 0
-                    break
-                elseif gridValue > 1
-                    numFree = getNumFreeNeighbors(row, col)
-                    freeSpaces[gridValue-1] += numFree
-                    if numFree == 0
-                        push!(safeHexes[gridValue-1], (row, col))
-                        # check if it has neighbors of same color group / add somewhere
-                    end
-                end
-            end
-        end
         ## Look in safeHexes and find safe groups
         println(safeHexes)
         for playerHexes in safeHexes
@@ -364,10 +274,7 @@ function Grid()
         # if the new field is not of the same player --> stop
         if (getGridValue(row, col) != value) | ([row, col] in seen)
             return 0.0
-        else # otherwise set it free and look whether there are more belonging to the group
-            # TODO check whether calculations are still correct in big groups
-            # --> may overwrite each other
-            # grid = copy(hexgrid)
+        else
             push!(seen, [row, col])
             # println("seen:", seen)
             size = 0.0
@@ -425,8 +332,6 @@ end
 # myGrid.setGridValue!(3, 4, 1)
 # myGrid.setGridValue!(3, 4, 1)
 #
-# #
-#
 # myGrid.setGridValue!(1,4,2)
 # myGrid.setGridValue!(1,3,3)
 # myGrid.printBoard()
@@ -470,51 +375,3 @@ end
 # println(myGrid.groupSize)
 # myGrid.printBoard()
 # println()
-# println("Undoing the previous moves")
-# myGrid.setGridValue!(5, 3, 1)
-# myGrid.setGridValue!(2, 1, 1)
-# println(myGrid.calculateScores(2))
-# println(myGrid.groupSize)
-# myGrid.setGridValue!(5, 1, 1)
-# myGrid.setGridValue!(3, 2, 1)
-# println(myGrid.calculateScores(2))
-# myGrid.setGridValue!(4, 4, 1)
-# myGrid.setGridValue!(7, 1, 1)
-# println(myGrid.calculateScores(2))
-# myGrid.printBoard()
-# println()
-# println("Do another one")
-# myGrid.setGridValue!(5, 4, 2)
-# myGrid.setGridValue!(4, 6, 3)
-# println(myGrid.calculateScores(2))
-# println(myGrid.groups)
-# println(myGrid.groupSize)
-# myGrid.printBoard()
-
-# println(myGrid.groupSize)
-
-# myGrid.setGridValue!(1, 5, 2)
-# myGrid.setGridValue!(5, 1, 2)
-# myGrid.setGridValue!(5, 2, 2)
-# myGrid.setGridValue!(4, 4, 2)
-# myGrid.setGridValue!(4, 5, 2)
-# myGrid.setGridValue!(5, 3, 2)
-# myGrid.setGridValue!(3, 1, 2)
-# myGrid.setGridValue!(1, 4, 2)
-# myGrid.setGridValue!(9, 1, 2)
-# myGrid.setGridValue!(9, 2, 2)
-# myGrid.setGridValue!(3, 2, 2)
-# # @time myGrid.setGridValue!(2, 2, 2)
-# myGrid.printBoard()
-# println(myGrid.calculateScores(2))
-#
-# myGrid.setGridValue!(5, 4, 3)
-# myGrid.setGridValue!(5, 5, 3)
-# myGrid.setGridValue!(5, 6, 3)
-# myGrid.setGridValue!(6, 3, 3)
-# myGrid.setGridValue!(7, 1, 3)
-# myGrid.setGridValue!(7, 2, 3)
-# myGrid.setGridValue!(9, 3, 3)
-# myGrid.setGridValue!(9, 4, 3)
-# myGrid.printBoard()
-# println(myGrid.calculateScores(2))

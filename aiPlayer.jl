@@ -1,5 +1,5 @@
-include("grid.jl")
-include("randomPlayer.jl")
+# include("grid.jl")
+# include("randomPlayer.jl")
 using IterTools
 using ProgressMeter
 
@@ -26,7 +26,7 @@ function makeSmartTurn(grid, player::Int, timeLeft::Float64)
     grid.setGridValue!(bestTurn[1][1], bestTurn[1][2], 2)
     grid.setGridValue!(bestTurn[2][1], bestTurn[2][2], 3)
 
-    println("Finished smart turn")
+    # println("Finished smart turn")
     # println(grid.history)
     # grid.printBoard()
     # println(grid.calculateScores(2))
@@ -72,7 +72,6 @@ function iterativeDeepening(grid, player::Int, timeLeft::Float64)::Array{Array{I
         # println("error after alphaBetaSearch")
         timeElapsed += (time_ns()-startTime)/1.0e9
         maxDepth += 1
-        break # TODO remove this (just for debugging)
     end
     # println("MaxDepth = ", maxDepth-1)
     end
@@ -140,6 +139,7 @@ function alphaBetaSearch(grid,
         # println("Not game over or search depth reached")
         for (index, turn) in enumerate(posTurns)
             # if no time left
+            # println("one possible Turn: ", turn)
             if timeLeft <= (time_ns()-startTime)/1.0e9
                 # println("Not time left --> no write in transpositionTable")
                 return value
@@ -149,6 +149,8 @@ function alphaBetaSearch(grid,
             grid.setGridValue!(turn[2][1], turn[2][2], 3)
             # do deeper search there
             newValue = -alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1, posTurns[1:end .!= index], timeLeft-(time_ns()-startTime)/1.0e9)
+            # println(grid.history)
+            # break
             if newValue > value
                 bestTurn = turn
                 value = newValue

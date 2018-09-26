@@ -85,10 +85,12 @@ while(!hexgrid.gameOver(numPlayers))
         println("Current Heuristic: ", hexgrid.heuristic())
         # println("Total History: ", hexgrid.history)
     end
-    # break
+    # if turn == 2
+    #     break
+    # end
 end
-println(hexgrid.groups)
-println(hexgrid.groupSize)
+# println(hexgrid.groups)
+# println(hexgrid.groupSize)
 println("Calculated TOTAL_TURNS: ", totalTurns)
 if 'a' in players
     println("AI needed ", timeAIneeded, "s of its ", totalTurnTime, "s.")

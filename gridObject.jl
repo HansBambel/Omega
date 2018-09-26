@@ -113,7 +113,7 @@ function Grid()
                 # println("##### POPPED FROM HISTORY   ####")
                 # println(pop!(history))
                 pop!(history)
-                previousEntry = last(history)
+                previousEntry = deepcopy(last(history))
                 # println("##### NOW LATEST HISTORY   ####")
                 # println(previousEntry)
                 groups, groupSize = previousEntry[1], previousEntry[2]
@@ -134,6 +134,7 @@ function Grid()
         for n in sameNeighbors
             # if they are not yet connected: unify them
             # if find(gridMapping[hexfield], value-1) != find(gridMapping[n], value-1)
+            # println("hexfield: ", hexfield, " n: ", n)
             union(hexfield, n, value-1)
             # end
         end
@@ -164,11 +165,13 @@ function Grid()
         # if groups[player][x] != x
         #     groups[player][x] = find(groups[player][x], player)
         # end
+        # return groups[player][x]
+        # path splitting:
         while groups[player][x] != x
-            next = groups[player][x]
-            groups[player][x] = groups[player][next]
-            x = next
-            # x, groups[player][x] = groups[player][x], groups[player][groups[player][x]]
+            # next = groups[player][x]
+            # groups[player][x] = groups[player][next]
+            # x = next
+            x, groups[player][x] = groups[player][x], groups[player][groups[player][x]]
         end
         return x
     end
@@ -399,7 +402,35 @@ end
 # const global PLAYERCOLORS = ["\U2715", "\U25B3", "\U26C4", "\U2661"]
 # myGrid = Grid()
 # myGrid.initializeGrid(5)
-# # myGrid.setGridValue!(1, 1, 1)
+# myGrid.setGridValue!(2,1,2)
+# myGrid.setGridValue!(1,2,3)
+# myGrid.printBoard()
+# println(myGrid.calculateScores(2))
+# # do alot of set and back
+# myGrid.setGridValue!(1, 1, 2)
+# myGrid.setGridValue!(2, 2, 2)
+# myGrid.setGridValue!(3, 1, 2)
+# myGrid.setGridValue!(3, 2, 2)
+# myGrid.setGridValue!(4, 4, 3)
+# myGrid.setGridValue!(2, 4, 3)
+# myGrid.setGridValue!(3, 4, 3)
+# myGrid.setGridValue!(3, 4, 3)
+# myGrid.calculateScores(2)
+# myGrid.setGridValue!(1, 1, 1)
+# myGrid.setGridValue!(2, 2, 1)
+# myGrid.setGridValue!(3, 1, 1)
+# myGrid.setGridValue!(3, 2, 1)
+# myGrid.setGridValue!(4, 4, 1)
+# myGrid.setGridValue!(2, 4, 1)
+# myGrid.setGridValue!(3, 4, 1)
+# myGrid.setGridValue!(3, 4, 1)
+#
+# #
+#
+# myGrid.setGridValue!(1,4,2)
+# myGrid.setGridValue!(1,3,3)
+# myGrid.printBoard()
+# println(myGrid.calculateScores(2))
 # myGrid.setGridValue!(2, 2, 2)
 # myGrid.setGridValue!(1, 2, 3)
 # println(myGrid.calculateScores(2))

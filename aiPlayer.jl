@@ -23,7 +23,8 @@ function makeSmartTurn(grid, player::Int, timeLeft::Float64)
     bestTurn = iterativeDeepening(grid, player, timeLeft)
 
     # get the best move and play it
-    grid.setGridValue!(bestTurn[1][1], bestTurn[1][2], 2)
+    # grid.setGridValue!(bestTurn[1][1], bestTurn[1][2], 2)
+    # first move is already done by iterative deepening
     grid.setGridValue!(bestTurn[2][1], bestTurn[2][2], 3)
 
     # println("Finished smart turn")
@@ -43,7 +44,7 @@ function iterativeDeepening(grid, player::Int, timeLeft::Float64)::Array{Array{I
     posMoves = grid.possibleMoves()
     # println("turns left: ", length(posMoves) ÷ 2)
     # calculate all possible turns from those moves
-    posTurns = [[i, j] for i in posMoves for j in posMoves if i!=j]
+    # posTurns = [[i, j] for i in posMoves for j in posMoves if i!=j]
     # println(" possible Turns: ", length(posTurns))
     # Iterative deepening only useful if having TranspositionTable
     # create transpositionTable(hashmap)
@@ -55,8 +56,8 @@ function iterativeDeepening(grid, player::Int, timeLeft::Float64)::Array{Array{I
     timeElapsed = 0.0
     # number of turns left: length(posMoves) ÷ 2
     println("Turns left: ", length(posMoves) ÷ 2)
-    println("Possible turns: ", length(posTurns))
-    while (timeElapsed < timeLeft) & (maxDepth <= length(posMoves) ÷ 2)
+    println("Possible moves: ", length(posMoves))
+    while (timeElapsed < timeLeft) & (maxDepth < length(posMoves))
         # do alpha-beta-search
         # do a copy of the grid and run alphaBetaSearch on it
         # copiedGrid = copy(grid)
@@ -65,7 +66,7 @@ function iterativeDeepening(grid, player::Int, timeLeft::Float64)::Array{Array{I
         initAlpha = -Inf
         initBeta = Inf
         startTime = time_ns()
-        newValue = alphaBetaSearch(grid, transpositionTable, player, initAlpha, initBeta, maxDepth, posTurns, timeLeft-timeElapsed)
+        newValue = alphaBetaSearch(grid, transpositionTable, player, initAlpha, initBeta, maxDepth, posMoves, timeLeft-timeElapsed, false)
         println("Best value: ", newValue)
         println("Depth ", maxDepth, " took ", (time_ns()-startTime)/1.0e9,"s")
         # Write in hashmap
@@ -79,10 +80,26 @@ function iterativeDeepening(grid, player::Int, timeLeft::Float64)::Array{Array{I
     # println("transpositionTable:")
     # println(transpositionTable)
     # printBoard(grid)
-    println("Best Move: ", transpositionTable[grid.getHash()])
+    if haskey(transpositionTable, grid.getHash())
+        println("Got firstMove")
+        _, _, _, firstMove = transpositionTable[grid.getHash()]
+    else
+        println("No firstMove in transpositionTable --> basic opening")
+        _, _, _, firstMove = get(transpositionTable, grid.getHash(), (0.0, 0, 0, posMoves[1]))
+    end
+    # execute it and get next one move to finish a turn
+    grid.setGridValue!(firstMove[1], firstMove[2], 2)
+    if haskey(transpositionTable, grid.getHash())
+        println("Got secondMove")
+        _, _, _, secondMove = transpositionTable[grid.getHash()]
+    else
+        println("No secondMove in transpositionTable --> basic opening")
+        _, _, _, secondMove = get(transpositionTable, grid.getHash(), (0.0, 0, 0, posMoves[2]))
+    end
+    println("Best Move: ", [firstMove, secondMove])
     # sleep(3)
-    _, _, _, bestTurn = get(transpositionTable, grid.getHash(), (0.0, 0, 0, posTurns[1]))
-    return bestTurn
+
+    return [firstMove, secondMove]
 end
 
 # returns best value in subtree and write it in hashmap
@@ -92,17 +109,18 @@ function alphaBetaSearch(grid,
                          alpha::Float64,
                          beta::Float64,
                          depth::Int,
-                         posTurns::Array,
-                         timeLeft::Float64)::Float64
+                         posMoves::Array,
+                         timeLeft::Float64,
+                         firstStoneSet::Bool)::Float64
     otherPlayer = player == 2 ? 3 : 2
     oldAlpha = alpha
     value = -Inf # this needs to be outside the "if" because... Julia
-    bestTurn = posTurns[1]
+    bestMove = posMoves[1]
     # look in transpositionTable for entry
     if haskey(transpositionTable, grid.getHash())
         # println("Has Entry: ", transpositionTable[grid])
         # println("Found Entry")
-        ttValue, ttFlag, ttDepth, ttTurn = transpositionTable[grid.getHash()]
+        ttValue, ttFlag, ttDepth, ttMove = transpositionTable[grid.getHash()]
         # check if we already have been here and get info
         if ttDepth >= depth
             if ttFlag == EXACT
@@ -121,7 +139,7 @@ function alphaBetaSearch(grid,
 
     # if no possible move --> gameover (terminal state)
     # if grid.gameOver(2)
-    if grid.getNumPosMoves() < 2
+    if grid.getNumPosMoves() < 1
         # println("Game over --> Eval Board")
         # println("possibleMoves: ", grid.getNumPosMoves())
         scores = grid.calculateScores(2)
@@ -137,46 +155,46 @@ function alphaBetaSearch(grid,
         startTime = time_ns()
         # for all possible TURNS: execute them all
         # println("Not game over or search depth reached")
-        for (index, turn) in enumerate(posTurns)
+        for (index, move) in enumerate(posMoves)
             # if no time left
             # println("one possible Turn: ", turn)
             if timeLeft <= (time_ns()-startTime)/1.0e9
                 # println("Not time left --> no write in transpositionTable")
                 return value
             end
-            # execute the two moves
-            grid.setGridValue!(turn[1][1], turn[1][2], 2)
-            grid.setGridValue!(turn[2][1], turn[2][2], 3)
             # do deeper search there
-            newValue = -alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1, posTurns[1:end .!= index], timeLeft-(time_ns()-startTime)/1.0e9)
-            # println(grid.history)
-            # break
+            if firstStoneSet
+                grid.setGridValue!(move[1], move[2], 3)
+                newValue = -alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1, posMoves[1:end .!= index], timeLeft-(time_ns()-startTime)/1.0e9, false)
+            else
+                grid.setGridValue!(move[1], move[2], 2)
+                newValue = alphaBetaSearch(grid, transpositionTable, player, alpha, beta, depth-1, posMoves[1:end .!= index], timeLeft-(time_ns()-startTime)/1.0e9, true)
+            end
+
             if newValue > value
-                bestTurn = turn
+                bestMove = move
                 value = newValue
             end
             alpha = max(alpha, value)
             # prune --> no need to look at the other children
             if alpha >= beta
-                grid.setGridValue!(turn[2][1], turn[2][2], 1)
-                grid.setGridValue!(turn[1][1], turn[1][2], 1)
+                grid.setGridValue!(move[1], move[2], 1)
                 break
             end
 
             # undo all the moves
-            grid.setGridValue!(turn[2][1], turn[2][2], 1)
-            grid.setGridValue!(turn[1][1], turn[1][2], 1)
+            grid.setGridValue!(move[1], move[2], 1)
         end
 
         # println("Store the result")
         # println("Value: ", value, " oldAlpha: ", oldAlpha, " beta: ", beta)
         # Store (more accurate) result in transpositionTable
         if value <= oldAlpha
-            transpositionTable[grid.getHash()] = value, UPPER, depth, bestTurn
+            transpositionTable[grid.getHash()] = value, UPPER, depth, bestMove
         elseif value >= beta
-            transpositionTable[grid.getHash()] = value, LOWER, depth, bestTurn
+            transpositionTable[grid.getHash()] = value, LOWER, depth, bestMove
         else
-            transpositionTable[grid.getHash()] = value, EXACT, depth, bestTurn
+            transpositionTable[grid.getHash()] = value, EXACT, depth, bestMove
         end
 
         # this is the value that alphaBeta/negamax returned

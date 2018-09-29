@@ -22,7 +22,7 @@ function makeSmartTurn(grid, player::Int, timeLeft::Float64, currentTurn::Int)
     println("Turns left: ", length(posMoves) ÷ 2)
     println("Possible moves: ", length(posMoves))
     bestTurn = [posMoves[1], posMoves[2]]
-    println(bestTurn)
+    # println(bestTurn)
     # if game just started: put your own stones in the corner and the other ones in the middle
     gridOffset::Int = grid.getOffset()
     otherPlayer::Int = player == 1 ? 2 : 1
@@ -58,7 +58,18 @@ function makeSmartTurn(grid, player::Int, timeLeft::Float64, currentTurn::Int)
     else
         # TODO make smart time management (when the game is more advanced it requires less time to search)
         # --> in the beginning do bigger search, later less needed
-        bestTurn = iterativeDeepening(grid, player, posMoves, timeLeft)
+        timeForTurns = timeLeft - 20
+        aiTurns = (length(posMoves) ÷ 2 + 1) ÷ 2
+        # the last 3 AIturns require about 15s and always reach the end
+        # --> they get the whole time (no need for management)
+        if aiTurns <= 3
+            timeForThisTurn = 15.0
+        else
+            # the current turn requires the most time
+            timeForThisTurn = timeForTurns/(aiTurns - 3)
+        end
+        println("Time for Turn ", currentTurn, ": ", timeForThisTurn)
+        bestTurn = iterativeDeepening(grid, player, posMoves, timeForThisTurn)
         # get the best move and play it
         # first move is already done by iterative deepening
         grid.setGridValue!(bestTurn[2][1], bestTurn[2][2], 3)
@@ -77,7 +88,7 @@ function iterativeDeepening(grid, player::Int, posMoves::Array, timeLeft::Float6
     # create transpositionTable(hashmap)
     # TT looks the following: key=grid, value=Tuple(value, flag, searchDepth, bestTurn)
     transpositionTable = Dict{Int64, Tuple{Float64, Int, Int, Array}}()
-    println("Time left: ", timeLeft)
+    # println("Time left: ", timeLeft)
     let
     maxDepth = 1
     timeElapsed = 0.0

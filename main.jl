@@ -49,7 +49,7 @@ hexgrid.initializeGrid(gridSize)
 hexgrid.printBoard()
 
 ### This is the time the AI is allowed to have
-totalTurnTime = 5*60.0
+totalTurnTime = 2*60.0
 totalTurns = countNum(1, hexgrid.getArray()) ÷ numPlayers
 aiTurns = totalTurns ÷ 2
 # TODO this time assumes every turn needs the same amount
@@ -69,9 +69,9 @@ while(!hexgrid.gameOver(numPlayers))
             makeRandomTurn(hexgrid, numPlayers)
         elseif (players[p] == 'a') | (players[p] == 'A')
             println("####   TURN ", turn, ": AI PLAYER ", PLAYERCOLORS[p], "   ####")
-            timeForTurn = @elapsed makeSmartTurn(hexgrid, p, timePerTurn, turn)
+            timeForTurn = @elapsed makeSmartTurn(hexgrid, p, totalTurnTime-timeAIneeded, turn)
             global timeAIneeded += timeForTurn
-            println("AI needed ", timeForTurn, "s of its given ", timePerTurn, "s")
+            println("AI needed ", timeAIneeded, "s of its given ", totalTurnTime, "s")
         elseif (players[p] == 'h') | (players[p] == 'H')
             println("####   TURN ", turn, ": HUMAN PLAYER ", PLAYERCOLORS[p], "   ####")
             makeTurn(hexgrid, numPlayers)

@@ -15,7 +15,7 @@ end
 
 
 function Grid()
-    Random.seed!(42)
+    # Random.seed!(42)
     grid = Array{Int}
     gridMapping = Dict{Array{Int, 1}, Int}()
     gridMappingBackwards = Array{Array{Int, 1}, 1}()

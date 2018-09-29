@@ -150,6 +150,10 @@ function Grid()
         return currentHash
     end
 
+    function getOffset()
+        return offset
+    end
+
     function getNumPosMoves()
         return numPossibleMoves
     end
@@ -299,13 +303,14 @@ function Grid()
            printBoard;
            printArray;
            gameOver;
+           getHash;
            possibleMoves;
-           getNeighbors;
            calculateScores;
            heuristic;
+           getNeighbors;
            checkGroup;
            getFreeFieldsAroundGroup;
-           getHash;
+           getOffset;
            groups;
            groupSize;
            history)

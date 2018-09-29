@@ -16,17 +16,54 @@ grid is the field
 player is the color the AI tries to maximize
 time is the time left to compute
 """
-function makeSmartTurn(grid, player::Int, timeLeft::Float64)
-    # TODO make smart time management (when the game is more advanced it requires less time to search)
-    # --> in the beginning do bigger search, later less needed
-    # TODO in the beginning of the game maybe use a fixed set of moves so we dont waste time for shallow search
-    # what moves are available
+function makeSmartTurn(grid, player::Int, timeLeft::Float64, currentTurn::Int)
+    # in the beginning of the game maybe use a fixed set of moves so we dont waste time for shallow search
     posMoves = grid.possibleMoves()
-    bestTurn = iterativeDeepening(grid, player, posMoves, timeLeft)
+    println("Turns left: ", length(posMoves) ÷ 2)
+    println("Possible moves: ", length(posMoves))
+    bestTurn = [posMoves[1], posMoves[2]]
+    println(bestTurn)
+    # if game just started: put your own stones in the corner and the other ones in the middle
+    gridOffset::Int = grid.getOffset()
+    otherPlayer::Int = player == 1 ? 2 : 1
+    # best opening move
+    if currentTurn == 1
+        bestTurn[player] = [2*gridOffset+1 gridOffset+1]
+        bestTurn[otherPlayer] = [gridOffset+1 gridOffset+1]
+        grid.setGridValue!(bestTurn[player][1], bestTurn[player][2], player+1)
+        grid.setGridValue!(bestTurn[otherPlayer][1], bestTurn[otherPlayer][2], otherPlayer+1)
+    elseif currentTurn < 6
+        # bottem right corner
+        if [2*gridOffset+1, gridOffset+1] in posMoves
+            bestTurn[player] = [2*gridOffset+1, gridOffset+1]
+        # bottom left corner
+        elseif [2*gridOffset+1, 1] in posMoves
+            bestTurn[player] = [2*gridOffset+1, 1]
+        # middle right
+        elseif [gridOffset+1, 2*gridOffset+1] in posMoves
+            bestTurn[player] = [gridOffset+1, 2*gridOffset+1]
+        # middle left
+        elseif [gridOffset+1, 1] in posMoves
+            bestTurn[player] = [gridOffset+1, 1]
+        # top right
+        elseif [1, gridOffset+1] in posMoves
+            bestTurn[player] = [1, gridOffset+1]
+        # top left
+        elseif [1, 1] in posMoves
+            bestTurn[player] = [1, 1]
+        end
+        bestTurn[otherPlayer] = posMoves[length(posMoves) ÷ 2]
+        grid.setGridValue!(bestTurn[player][1], bestTurn[player][2], player+1)
+        grid.setGridValue!(bestTurn[otherPlayer][1], bestTurn[otherPlayer][2], otherPlayer+1)
+    else
+        # TODO make smart time management (when the game is more advanced it requires less time to search)
+        # --> in the beginning do bigger search, later less needed
+        bestTurn = iterativeDeepening(grid, player, posMoves, timeLeft)
+        # get the best move and play it
+        # first move is already done by iterative deepening
+        grid.setGridValue!(bestTurn[2][1], bestTurn[2][2], 3)
+    end
 
-    # get the best move and play it
-    # first move is already done by iterative deepening
-    grid.setGridValue!(bestTurn[2][1], bestTurn[2][2], 3)
 
     println(PLAYERCOLORS[1], " stone set on (", bestTurn[1][1], ", ", bestTurn[1][2], ")")
     println(PLAYERCOLORS[2], " stone set on (", bestTurn[2][1], ", ", bestTurn[2][2], ")")
@@ -44,9 +81,6 @@ function iterativeDeepening(grid, player::Int, posMoves::Array, timeLeft::Float6
     let
     maxDepth = 1
     timeElapsed = 0.0
-    # number of turns left: length(posMoves) ÷ 2
-    println("Turns left: ", length(posMoves) ÷ 2)
-    println("Possible moves: ", length(posMoves))
     while (timeElapsed < timeLeft) & (maxDepth < length(posMoves))
         # do alpha-beta-search
         initAlpha = -Inf

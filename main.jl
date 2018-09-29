@@ -69,7 +69,7 @@ while(!hexgrid.gameOver(numPlayers))
             makeRandomTurn(hexgrid, numPlayers)
         elseif (players[p] == 'a') | (players[p] == 'A')
             println("####   TURN ", turn, ": AI PLAYER ", PLAYERCOLORS[p], "   ####")
-            timeForTurn = @elapsed makeSmartTurn(hexgrid, p, timePerTurn)
+            timeForTurn = @elapsed makeSmartTurn(hexgrid, p, timePerTurn, turn)
             global timeAIneeded += timeForTurn
             println("AI needed ", timeForTurn, "s of its given ", timePerTurn, "s")
         elseif (players[p] == 'h') | (players[p] == 'H')

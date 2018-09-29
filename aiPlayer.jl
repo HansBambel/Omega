@@ -61,7 +61,7 @@ function iterativeDeepening(grid, player::Int, timeLeft::Float64)::Array{Array{I
 
     # look up state in hashmap and return the best turn from it
     if haskey(transpositionTable, grid.getHash())
-        println("Got firstMove")
+        # println("Got firstMove")
         _, _, _, firstMove = transpositionTable[grid.getHash()]
     else
         println("No firstMove in transpositionTable --> basic opening")
@@ -70,13 +70,13 @@ function iterativeDeepening(grid, player::Int, timeLeft::Float64)::Array{Array{I
     # execute it and get next one move to finish a turn
     grid.setGridValue!(firstMove[1], firstMove[2], 2)
     if haskey(transpositionTable, grid.getHash())
-        println("Got secondMove")
+        # println("Got secondMove")
         _, _, _, secondMove = transpositionTable[grid.getHash()]
     else
         println("No secondMove in transpositionTable --> basic opening")
         _, _, _, secondMove = get(transpositionTable, grid.getHash(), (0.0, 0, 0, posMoves[2]))
     end
-    println("Best Move: ", [firstMove, secondMove])
+    # println("Best Move: ", [firstMove, secondMove])
 
     return [firstMove, secondMove]
 end
@@ -122,8 +122,12 @@ function alphaBetaSearch(grid,
     elseif depth <= 0
         # TODO come up with a good heuristic
         # return a heuristic-value ("AN ADMISSABLE HEURISTIC NEVER OVERESTIMATES!" - Helmar Gust)
-        approximation = grid.calculateScores(2)
-        return approximation[player] - approximation[otherPlayer]
+        # grid.printBoard()
+        approximation = grid.heuristic()
+        return approximation[player-1] - approximation[otherPlayer-1]
+        # approximation = grid.calculateScores(2)
+        # return approximation[player] - approximation[otherPlayer]
+
     # continue searching
     else
         startTime = time_ns()

@@ -77,7 +77,7 @@ while(!hexgrid.gameOver(numPlayers))
             makeTurn(hexgrid, numPlayers)
         end
         println("Current Score: ", hexgrid.calculateScores(numPlayers)[1:numPlayers])
-        # println("Current Heuristic: ", hexgrid.heuristic())
+        println("Current Heuristic: ", hexgrid.heuristic())
     end
 end
 println("Calculated TOTAL_TURNS: ", totalTurns)

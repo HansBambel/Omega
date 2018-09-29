@@ -225,7 +225,7 @@ function Grid()
     end
 
     function calculateScores(numPlayers)::Array{Float64}
-        scores = [1.0, 1.0, 1.0, 1.0]
+        scores = [1.0, 1.0]
         # println("Is node 12 in the same set as 3? ", find(12, 1) == find(3, 1))
         scores[1] = prod([groupSize[1][g] for g in Set(groups[1])])
         scores[2] = prod([groupSize[2][g] for g in Set(groups[2])])

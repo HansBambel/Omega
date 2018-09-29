@@ -20,7 +20,9 @@ function makeSmartTurn(grid, player::Int, timeLeft::Float64)
     # TODO make smart time management (when the game is more advanced it requires less time to search)
     # --> in the beginning do bigger search, later less needed
     # TODO in the beginning of the game maybe use a fixed set of moves so we dont waste time for shallow search
-    bestTurn = iterativeDeepening(grid, player, timeLeft)
+    # what moves are available
+    posMoves = grid.possibleMoves()
+    bestTurn = iterativeDeepening(grid, player, posMoves, timeLeft)
 
     # get the best move and play it
     # first move is already done by iterative deepening
@@ -33,9 +35,8 @@ function makeSmartTurn(grid, player::Int, timeLeft::Float64)
 end
 
 # returns the best turn
-function iterativeDeepening(grid, player::Int, timeLeft::Float64)::Array{Array{Int, 2}}
-    # what moves are available
-    posMoves = grid.possibleMoves()
+function iterativeDeepening(grid, player::Int, posMoves::Array, timeLeft::Float64)::Array{Array{Int, 2}}
+
     # create transpositionTable(hashmap)
     # TT looks the following: key=grid, value=Tuple(value, flag, searchDepth, bestTurn)
     transpositionTable = Dict{Int64, Tuple{Float64, Int, Int, Array}}()
@@ -91,7 +92,7 @@ function alphaBetaSearch(grid,
                          posMoves::Array,
                          timeLeft::Float64,
                          firstStoneSet::Bool)::Float64
-    otherPlayer = player == 2 ? 3 : 2
+    otherPlayer = player == 1 ? 2 : 1
     oldAlpha = alpha
     value = -Inf # this needs to be outside the "if" because... Julia
     bestMove = posMoves[1]
@@ -115,8 +116,9 @@ function alphaBetaSearch(grid,
     end
 
     # if no possible move --> gameover (terminal state)
-    if grid.getNumPosMoves() < 1
+    if grid.getNumPosMoves() <= 1
         scores = grid.calculateScores(2)
+        # println("EndScore: Player ",player, " - player ", otherPlayer," --> ", scores[player]-scores[otherPlayer])
         return scores[player]-scores[otherPlayer]
     # not yet finished, but max search depth
     elseif depth <= 0
@@ -124,7 +126,7 @@ function alphaBetaSearch(grid,
         # return a heuristic-value ("AN ADMISSABLE HEURISTIC NEVER OVERESTIMATES!" - Helmar Gust)
         # grid.printBoard()
         approximation = grid.heuristic()
-        return approximation[player-1] - approximation[otherPlayer-1]
+        return approximation[player] - approximation[otherPlayer]
         # approximation = grid.calculateScores(2)
         # return approximation[player] - approximation[otherPlayer]
 

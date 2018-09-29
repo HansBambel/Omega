@@ -49,7 +49,7 @@ hexgrid.initializeGrid(gridSize)
 hexgrid.printBoard()
 
 ### This is the time the AI is allowed to have
-totalTurnTime = 2*60.0
+totalTurnTime = 5*60.0
 totalTurns = countNum(1, hexgrid.getArray()) ÷ numPlayers
 aiTurns = totalTurns ÷ 2
 # TODO this time assumes every turn needs the same amount
@@ -76,7 +76,7 @@ while(!hexgrid.gameOver(numPlayers))
             println("####   TURN ", turn, ": HUMAN PLAYER ", PLAYERCOLORS[p], "   ####")
             makeTurn(hexgrid, numPlayers)
         end
-        println("Current Score: ", hexgrid.calculateScores(numPlayers)[1:numPlayers])
+        println("Current Score: ", hexgrid.calculateScores(numPlayers))
         println("Current Heuristic: ", hexgrid.heuristic())
     end
 end

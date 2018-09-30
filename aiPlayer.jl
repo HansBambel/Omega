@@ -1,7 +1,4 @@
-# include("grid.jl")
-# include("randomPlayer.jl")
 using IterTools
-using ProgressMeter
 
 # flags
 const EXACT = 0
@@ -83,7 +80,7 @@ function makeSmartTurn(grid, player::Int, timeLeft::Float64, currentTurn::Int)
 end
 
 # returns the best turn
-function iterativeDeepening(grid, player::Int, posMoves::Array, timeLeft::Float64)::Array{Array{Int, 2}}
+function iterativeDeepening(grid, player::Int, posMoves::Array, timeLeft::Float64)::Array{Array{Int, 1}}
 
     # create transpositionTable(hashmap)
     # TT looks the following: key=grid, value=Tuple(value, flag, searchDepth, bestTurn)
@@ -162,17 +159,16 @@ function alphaBetaSearch(grid,
 
     # if no possible move --> gameover (terminal state)
     if grid.getNumPosMoves() <= 1
-        scores = grid.calculateScores(2)
+        scores = grid.calculateScores()
         # println("EndScore: Player ",player, " - player ", otherPlayer," --> ", scores[player]-scores[otherPlayer])
         return scores[player]-scores[otherPlayer]
-    # not yet finished, but max search depth
+    # not yet gameOver, but max search depth
     elseif depth <= 0
         # TODO come up with a good heuristic
         # return a heuristic-value ("AN ADMISSABLE HEURISTIC NEVER OVERESTIMATES!" - Helmar Gust)
-        # grid.printBoard()
         approximation = grid.heuristic()
         return approximation[player] - approximation[otherPlayer]
-        # approximation = grid.calculateScores(2)
+        # approximation = grid.calculateScores()
         # return approximation[player] - approximation[otherPlayer]
 
     # continue searching
@@ -182,7 +178,7 @@ function alphaBetaSearch(grid,
         for (index, move) in enumerate(posMoves)
             # if no time left
             if timeLeft <= (time_ns()-startTime)/1.0e9
-                # println("Not time left --> no write in transpositionTable")
+                # println("Not time left --> no write in transpositionTable at this depth")
                 return value
             end
             # do deeper search there

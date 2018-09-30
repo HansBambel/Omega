@@ -4,7 +4,6 @@ include("randomPlayer.jl")
 include("aiPlayer.jl")
 
 # https://unicode-table.com/en/
-
 # const global PLAYERCOLORS = ["W", "B", "R", "G"]
 const global PLAYERCOLORS = ["\U2715", "\U25B3", "\U26C4", "\U2661"]
 numPlayers = 2
@@ -12,40 +11,19 @@ gridSize = 4
 if length(ARGS) == 0
     print(" How big shall the grid be? Should be between 5-10: ")
     gridSize = parse(Int, chomp(readline()))
-    print(" Who are the players and what is the order? Ex.: rah = Random, AI, Human")
+    print(" Who are the players and what is the order? Ex.: ah = AI, Human")
     players = chomp(readline())
-    numPlayers = length(players)
-    # numPlayers = parse(Int, chomp(readline()))
 elseif length(ARGS) == 1
     gridSize = parse(Int, ARGS[1])
-    print(" Who are the players and what is the order? Ex.: rah = Random, AI, Human")
+    print(" Who are the players and what is the order? Ex.: ah = AI, Human")
     players = chomp(readline())
-    numPlayers = length(players)
 elseif length(ARGS) == 2
     gridSize = parse(Int, ARGS[1])
     players = ARGS[2]
-    numPlayers = length(players)
 end
 
 hexgrid = Grid()
 hexgrid.initializeGrid(gridSize)
-# setGridValue!(hexgrid, 1, 1, 2)
-# setGridValue!(hexgrid, 1, 2, 2)
-# setGridValue!(hexgrid, 1, 3, 2)
-# setGridValue!(hexgrid, 1, 5, 2)
-# setGridValue!(hexgrid, 2, 6, 2)
-# setGridValue!(hexgrid, 3, 1, 2)
-# setGridValue!(hexgrid, 3, 2, 2)
-# setGridValue!(hexgrid, 5, 1, 2)
-#
-# setGridValue!(hexgrid, 5, 4, 3)
-# setGridValue!(hexgrid, 5, 5, 3)
-# setGridValue!(hexgrid, 5, 6, 3)
-# setGridValue!(hexgrid, 6, 3, 3)
-# setGridValue!(hexgrid, 7, 1, 3)
-# setGridValue!(hexgrid, 7, 2, 3)
-# setGridValue!(hexgrid, 9, 3, 3)
-# setGridValue!(hexgrid, 9, 4, 3)
 hexgrid.printBoard()
 
 ### This is the time the AI is allowed to have
@@ -69,7 +47,7 @@ while(!hexgrid.gameOver(numPlayers))
             println("####   TURN ", turn, ": HUMAN PLAYER ", PLAYERCOLORS[p], "   ####")
             makeTurn(hexgrid, numPlayers)
         end
-        println("Current Score: ", hexgrid.calculateScores(numPlayers))
+        println("Current Score: ", hexgrid.calculateScores())
         println("Current Heuristic: ", hexgrid.heuristic())
     end
 end
@@ -77,7 +55,7 @@ if 'a' in players
     println("AI needed ", timeAIneeded, "s of its ", totalTurnTime, "s.")
 end
 println("### Game ended ###")
-scores = hexgrid.calculateScores(numPlayers)
+scores = hexgrid.calculateScores()
 println("Scores: ")
 for p in 1:numPlayers
     println(PLAYERCOLORS[p], " has scored: ", scores[p], " points")

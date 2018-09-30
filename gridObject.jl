@@ -21,13 +21,13 @@ function Grid()
     gridMappingBackwards = Array{Array{Int, 1}, 1}()
     groups = Array{Int}
     groupSize = Array{Int}
-    offset = 0
-    numPossibleMoves = 0
-    currentHash = 1337
+    offset::Int = 0
+    numPossibleMoves::Int = 0
+    currentHash::Int64 = 1337
     hashArray = Array
     history = Array{Array{Array{Array{Int64,1},1},1},1}(undef, 1)
 
-    function getArray()
+    function getArray()::Array{Array{Int, 1},1}
         return grid
     end
 
@@ -76,7 +76,7 @@ function Grid()
     end
 
     # set function for the grid
-    function setGridValue!(row::Int, col::Int, value)
+    function setGridValue!(row::Int, col::Int, value::Int)
         @assert row >= 0 "row can't be smaller than 0"
         @assert col >= 0 "col can't be smaller than 0"
         # if something is asked that is outside the grid
@@ -87,7 +87,8 @@ function Grid()
         else
             # update hash: current XOR old value XOR new value
             # remove old value from hashvalue and add new one
-            oldValue = getGridValue(row, col)
+            # oldValue = getGridValue(row, col)
+            oldValue = grid[row, col+max(0, offset-(row-1))]
             currentHash = currentHash ⊻ hashArray[row, col, oldValue]
             currentHash = currentHash ⊻ hashArray[row, col, value]
 
@@ -115,15 +116,11 @@ function Grid()
         for n in sameNeighbors
             union(hexfield, n, value-1)
         end
-        # println("New group:", groups)
-        # println("groupsize: ", groupSize)
     end
 
     function union(x::Array{Int}, y::Array{Int}, player::Int)
         xRoot = findRoot(gridMapping[x], player)
-        # println("Found xroot: ", xRoot, " size: ", groupSize[player][xRoot])
         yRoot = findRoot(gridMapping[y], player)
-        # println("Found yroot: ", yRoot, " size: ", groupSize[player][yRoot])
 
         # if they are already in the same set --> stop
         if xRoot == yRoot
@@ -146,15 +143,15 @@ function Grid()
         return x
     end
 
-    function getHash()
+    function getHash()::Int64
         return currentHash
     end
 
-    function getOffset()
+    function getOffset()::Int
         return offset
     end
 
-    function getNumPosMoves()
+    function getNumPosMoves()::Int
         return numPossibleMoves
     end
 
@@ -194,7 +191,7 @@ function Grid()
 
     # list all possible moves
     # TODO make it a list that gets updated at setindex
-    function possibleMoves()::Array
+    function possibleMoves()::Array{Array{Int,1},1}
         moves = []
         for row = 1:size(grid)[1]
             for col = 1:size(grid)[1]
@@ -202,7 +199,7 @@ function Grid()
                 if value == 0
                     break
                 elseif value == 1
-                    push!(moves, [row col])
+                    push!(moves, [row, col])
                 end
             end
         end
@@ -228,7 +225,7 @@ function Grid()
         return neighbors
     end
 
-    function calculateScores(numPlayers)::Array{Float64}
+    function calculateScores()::Array{Float64}
         scores = [1.0, 1.0]
         # println("Is node 12 in the same set as 3? ", find(12, 1) == find(3, 1))
         scores[1] = prod([groupSize[1][g] for g in Set(groups[1])])
@@ -237,7 +234,7 @@ function Grid()
     end
 
     # hardcoding requires less memory
-    function getNumNeighborsWithValue(row::Int, col::Int, value)::Int64
+    function getNumNeighborsWithValue(row::Int, col::Int, value::Int)::Int64
         neighbors = getNeighbors(row, col)
         total = (Int(getGridValue(neighbors[1][1], neighbors[1][2])==value) +
                 Int(getGridValue(neighbors[2][1], neighbors[2][2])==value) +
@@ -248,9 +245,9 @@ function Grid()
         return total
     end
 
-    function getFreeFieldsAroundGroup(hex::Array{Int, 1}, seen::Array)::Float64
+    function getFreeFieldsAroundGroup(hex::Array{Int, 1}, seen::Array{Array{Int,1}, 1})::Float64
         freeFields = 0.0
-        push!(seen, hex)
+        # push!(seen, hex)
         hexValue = getGridValue(hex[1], hex[2])
         neighbors = getNeighbors(hex[1], hex[2])
         # println("Neighbors of ", hex, ": ", neighbors)
@@ -259,7 +256,24 @@ function Grid()
             if nValue == 1
                 freeFields += 1.0
             elseif (nValue == hexValue) & !(n in seen)
-                freeFields += getFreeFieldsAroundGroup(n, seen)
+                freeFields += getFreeFieldsAroundGroup(n, push!(seen, n))
+            end
+        end
+        return freeFields
+    end
+
+    function getFreeFieldsAroundGroup(hex::Array{Int, 1})::Float64
+        freeFields = 0.0
+        # push!(seen, hex)
+        hexValue = getGridValue(hex[1], hex[2])
+        neighbors = getNeighbors(hex[1], hex[2])
+        # println("Neighbors of ", hex, ": ", neighbors)
+        for n in neighbors
+            nValue = getGridValue(n[1], n[2])
+            if nValue == 1
+                freeFields += 1.0
+            elseif nValue == hexValue
+                freeFields += getFreeFieldsAroundGroup(n, [hex, n])
             end
         end
         return freeFields
@@ -281,11 +295,11 @@ function Grid()
         # println("roots2: ", roots2)
         for r in roots1
             @inbounds hex = gridMappingBackwards[r]
-            freeFields1 += getFreeFieldsAroundGroup(hex, [])-2
+            freeFields1 += getFreeFieldsAroundGroup(hex)-2.0
         end
         for r in roots2
             @inbounds hex = gridMappingBackwards[r]
-            freeFields2 += getFreeFieldsAroundGroup(hex, [])-2
+            freeFields2 += getFreeFieldsAroundGroup(hex)-2.0
         end
         # multiply the optimal groups and substract the freefields as punishment
         # TODO maybe also the others?
@@ -319,34 +333,36 @@ end
 # const global PLAYERCOLORS = ["\U2715", "\U25B3", "\U26C4", "\U2661"]
 # myGrid = Grid()
 # myGrid.initializeGrid(5)
-# myGrid.setGridValue!(2,2,2)
-# myGrid.setGridValue!(1,2,3)
-# myGrid.setGridValue!(1,1,2)
-# myGrid.setGridValue!(1,3,3)
-# println(myGrid.heuristic())
-# myGrid.setGridValue!(2,1,2)
-# println(myGrid.heuristic())
-# # myGrid.printBoard()
-# # println(myGrid.calculateScores(2))
-# # # do alot of set and back
+# # myGrid.setGridValue!(2,2,2)
+# # myGrid.setGridValue!(1,2,3)
+# # myGrid.setGridValue!(1,1,2)
+# # myGrid.setGridValue!(1,3,3)
+# # println(myGrid.heuristic())
+# # myGrid.setGridValue!(2,1,2)
+# # println(myGrid.heuristic())
+# # # myGrid.printBoard()
+# # # println(myGrid.calculateScores())
+# # # # do alot of set and back
 # myGrid.setGridValue!(4, 1, 2)
 # myGrid.setGridValue!(5, 1, 2)
 # myGrid.setGridValue!(6, 1, 2)
 # myGrid.setGridValue!(3, 2, 2)
 # myGrid.setGridValue!(9, 4, 2)
 # myGrid.setGridValue!(9, 5, 2)
-# myGrid.setGridValue!(4, 6, 3)
-# myGrid.setGridValue!(5, 6, 3)
-# myGrid.setGridValue!(3, 3, 3)
-# myGrid.setGridValue!(4, 3, 3)
-# @time myGrid.heuristic()
+# @time myGrid.setGridValue!(4, 6, 3)
+# @time myGrid.setGridValue!(3, 3, 3)
+# @time myGrid.setGridValue!(5, 6, 3)
+# @time myGrid.setGridValue!(4, 3, 3)
+# myGrid.printBoard()
+# @time myGrid.calculateScores()
+# @time myGrid.calculateScores()
+# @code_warntype myGrid.calculateScores()
 # @time myGrid.heuristic()
 # @time myGrid.calculateScores(2)
 # @time myGrid.calculateScores(2)
 # @time myGrid.setGridValue!(5, 3, 3)
 # # myGrid.setGridValue!(3, 4, 3)
 # # myGrid.setGridValue!(3, 4, 3)
-# myGrid.printBoard()
 # # println(myGrid.getFreeFieldsAroundGroup([4, 1], []))
 # println(myGrid.heuristic())
 # @time myGrid.calculateScores(2)

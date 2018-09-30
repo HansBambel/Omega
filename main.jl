@@ -50,13 +50,6 @@ hexgrid.printBoard()
 
 ### This is the time the AI is allowed to have
 totalTurnTime = 2*60.0
-totalTurns = countNum(1, hexgrid.getArray()) ÷ numPlayers
-aiTurns = totalTurns ÷ 2
-# TODO this time assumes every turn needs the same amount
-# idea: find out when/how deep the AI can look into endstate in a reasonable time
-# NOTE later AI needs only a little bit of time because he doesn't need to look deep
-# the last 4 turns can be calculated within 1s
-timePerTurn = totalTurnTime / aiTurns
 timeAIneeded = 0
 turn = 0
 while(!hexgrid.gameOver(numPlayers))
@@ -80,7 +73,6 @@ while(!hexgrid.gameOver(numPlayers))
         println("Current Heuristic: ", hexgrid.heuristic())
     end
 end
-println("Calculated TOTAL_TURNS: ", totalTurns)
 if 'a' in players
     println("AI needed ", timeAIneeded, "s of its ", totalTurnTime, "s.")
 end

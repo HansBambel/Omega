@@ -25,8 +25,8 @@ function makeSmartTurn(grid, player::Int, timeLeft::Float64, currentTurn::Int)
     otherPlayer::Int = player == 1 ? 2 : 1
     # best opening move
     if currentTurn == 1
-        bestTurn[player] = [2*gridOffset+1 gridOffset+1]
-        bestTurn[otherPlayer] = [gridOffset+1 gridOffset+1]
+        bestTurn[player] = [2*gridOffset+1, gridOffset+1]
+        bestTurn[otherPlayer] = [gridOffset+1, gridOffset+1]
         grid.setGridValue!(bestTurn[player][1], bestTurn[player][2], player+1)
         grid.setGridValue!(bestTurn[otherPlayer][1], bestTurn[otherPlayer][2], otherPlayer+1)
     elseif currentTurn < 6

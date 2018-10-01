@@ -98,7 +98,7 @@ function Grid()
                 numPossibleMoves -= 1
                 unifySameNeighbors([row, col], value)
                 # save this to history
-                push!(history, [groups, groupSize])
+                push!(history, [deepcopy(groups), deepcopy(groupSize)])
             else
                 # delete the latest entry of history and get the previous one again
                 pop!(history)

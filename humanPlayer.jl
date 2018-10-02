@@ -20,7 +20,7 @@ function makeTurn(grid, players::Int)
                 push!(humanMoves, [row, col])
                 break
             end
-            println("Please enter a valid Hexfield! It must be free and the indices between 1 and ", size(grid.getArray())[1], ".")
+            println("Please enter a valid Hexfield! It must be free and the indices between 1 and ", 2*grid.getOffset() +1, ".")
             # ask again
 
         end

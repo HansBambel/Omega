@@ -6,19 +6,38 @@
 
 \date{\today}
 
+
 \begin{document}
 \maketitle
 
 \section{Description of the game}
 
 \section{Choice of programming language}
+I chose the programming language Julia. Since Mark told us that Python is quite slow, the programming language I'm most comfortable with fell through and I had to choose another one. Julia is quite new (version 1.0 came out on 8th of August 2018) \cite{julia1} and has a similar syntax like Python but was created for high performance computations. There it is possible to have C-like speeds \cite{benchmarks}. Although this is mainly useful for data analysis and machine learning I wanted to try it out for this project. Furthermore, it is possible to import Python and C packages.
 
 \section{Details of implementation}
+I chose to implement Omega on the command-line because Julia has no native graphical user interface library and it seemed to me a bit too much work to learn to program a GUI in Julia using another library additionally to learning Julia in the first place. Using unicode symbols still makes the graphical board representation appealing and useful.
+
+The grid has a hashing function for the later use of a transpositiontable. The hashing is done using zobrist hashing \cite{zobrist1970new} to be computationally efficient. A random 64-bit Integer is created when the grid is initialized to represent the empty board. Then, for every hexfield three 64-bit Integer values are generated representing that this field can be either free or have a white or a black stone on it. When a stone is set on the grid, the corresponding Integer of the previous occupying stone is removed from the old hashvalue using the XOR operation. Then, the new stone is inserted to the hashcode using the XOR operation with the corresponding Integer of the new stone.
+
+The hexgrid, additionally to having the current boardstate stored, has two lists of groups and groupsizes stored. This enables a fast calculation of the current score. When putting a player stone on the board a new hashcode is calculated and also a union-find algorithm \cite{galler1964improved} with path-splitting is used to update potential new groups. There is a difference to this when a stone of a player is removed (a field is freed up): additionally to storing the current board state, groups and group-sizes I also store the past groups and group-sizes. This makes it easy to revert to a previous state where the latest player stone was not set. This is done because a de-unification and thus updating all the groups is inefficient and requires more overhead.
 
 \section{Implementation of AI}
+The AI is implemented using a negamax search with iterative deepening and using a transposition table. To reduce the branching factor negamax is looking at a single move at each search depth and not a whole turn, which consists of two moves. This reduces the branching factor significantly: On a 6-by-6 boardgame it reduces the branching factor from 8190 to only 91 on the first move. Furthermore, with this division into two separate moves it allows negamax to prune even more resulting in less subtrees that are searched.
+
+Using a transposition table enables iterative deepening to work, since without it the previous search is not used at all and only extends the search space. Furthermore, using a transposition table implicitly applies move ordering thus making iterative deepening more effective.
 
 \section{Problems}
+\subsection{Heuristic}
+Finding a good heuristic was a key problem. As my old AI-teacher always said: "An admissible heuristics never overestimates." Therefore, using the current score is not suitable because having a high score now can change quickly in the next move when multiple groups are combined to a single one. The heuristic I use only takes groups of two and three into consideration. Those groups are then checked for their free neighbouring hexagons. Every free hexagon of a group-hex serves as a punishment, encouraging \textit{safe} groups (groups that cannot be extended). All other, bigger groups, are disregarded until a terminal state is reached. When a terminal state is reached, the complete score will be calculated, because this score can not be an overestimate since nothing changes any more.
+
+\subsection{Side-effects}
+For efficiently calculating scores and evaluating the heuristic I use a union-find algorithm \cite{galler1964improved}. Every time a stone of a player is set on the field the union-find algorithm will unify it with its neighbouring groups if there are any. Unfortunately, separating a group is complicated / computationally inefficient and thus, I save the current groups in a stack. If a separation is necessary, I pop the last entry (where the latest unification occurred) of the stack and use the one before. This way I circumvent a delete function of the union-find algorithm.
+A problem I had was that the scores were not calculated correctly when the AI-player was searching. Even trying reproducing the exact same moves by hand did not reproduce the same bug. After 10 mind-boggling hours I found out that I needed to create a deepcopy of the latest entry to not have side-effects later on.
 
 
+\bibliography{omegabib}
+\bibliographystyle{abbrv}
 
 \end{document}
+

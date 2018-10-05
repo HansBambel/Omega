@@ -53,7 +53,7 @@ function makeSmartTurn(grid, player::Int, timeLeft::Float64, currentTurn::Int)
         grid.setGridValue!(bestTurn[player][1], bestTurn[player][2], player+1)
         grid.setGridValue!(bestTurn[otherPlayer][1], bestTurn[otherPlayer][2], otherPlayer+1)
     else
-        # TODO make smart time management (when the game is more advanced it requires less time to search)
+        # make smart time management (when the game is more advanced it requires less time to search)
         # --> in the beginning do bigger search, later less needed
         timeForTurns = timeLeft - 20
         aiTurns = (length(posMoves) ÷ 2 + 1) ÷ 2
@@ -85,16 +85,19 @@ function iterativeDeepening(grid, player::Int, posMoves::Array, timeLeft::Float6
     # create transpositionTable(hashmap)
     # TT looks the following: key=grid, value=Tuple(value, flag, searchDepth, bestTurn)
     transpositionTable = Dict{Int64, Tuple{Float64, Int, Int, Array}}()
+    # for every depth I save two killermoves (moves that produced a cut off)
+    killerMoves = Array{Array{Array{Int, 1}, 1}, 1}()
     # println("Time left: ", timeLeft)
     let
     maxDepth = 1
     timeElapsed = 0.0
     while (timeElapsed < timeLeft) & (maxDepth < length(posMoves))
+        push!(killerMoves, [])
         # do alpha-beta-search
         initAlpha = -Inf
         initBeta = Inf
         startTime = time_ns()
-        newValue = alphaBetaSearch(grid, transpositionTable, player, initAlpha, initBeta, maxDepth, posMoves, timeLeft-timeElapsed, false)
+        newValue = alphaBetaSearch(grid, transpositionTable, player, initAlpha, initBeta, maxDepth, posMoves, killerMoves, timeLeft-timeElapsed, false)
         println("Depth ", maxDepth, " took ", (time_ns()-startTime)/1.0e9,"s Best Value: ", newValue)
         # Write in hashmap
         timeElapsed += (time_ns()-startTime)/1.0e9
@@ -102,6 +105,7 @@ function iterativeDeepening(grid, player::Int, posMoves::Array, timeLeft::Float6
     end
     end
 
+    println("KillerMoves: ", killerMoves)
     # look up state in hashmap and return the best turn from it
     if haskey(transpositionTable, grid.getHash())
         # println("Got firstMove")
@@ -132,12 +136,14 @@ function alphaBetaSearch(grid,
                          beta::Float64,
                          depth::Int,
                          posMoves::Array,
+                         killerMoves::Array{Array{Array{Int, 1}, 1}, 1},
                          timeLeft::Float64,
                          firstStoneSet::Bool)::Float64
     otherPlayer = player == 1 ? 2 : 1
     oldAlpha = alpha
     value = -Inf # this needs to be outside the "if" because... Julia
     bestMove = posMoves[1]
+    move_ordering::Array{Array{Int,1},1} = []
     # look in transpositionTable for entry
     if haskey(transpositionTable, grid.getHash())
         ttValue, ttFlag, ttDepth, ttMove = transpositionTable[grid.getHash()]
@@ -155,27 +161,50 @@ function alphaBetaSearch(grid,
                 return ttValue
             end
         end
+        push!(move_ordering, ttMove)
     end
+    # TODO more move ordering? killer move? History heuristic? PVS/Aspriation search (delta ~10?)?
 
     # if no possible move --> gameover (terminal state)
     if grid.getNumPosMoves() <= 1
         scores = grid.calculateScores()
-        # println("EndScore: Player ",player, " - player ", otherPlayer," --> ", scores[player]-scores[otherPlayer])
         return scores[player]-scores[otherPlayer]
     # not yet gameOver, but max search depth
     elseif depth <= 0
         # TODO come up with a good heuristic
-        # return a heuristic-value ("AN ADMISSABLE HEURISTIC NEVER OVERESTIMATES!" - Helmar Gust)
+        # "AN ADMISSABLE HEURISTIC NEVER OVERESTIMATES!" - Helmar Gust
         approximation = grid.heuristic()
         return approximation[player] - approximation[otherPlayer]
-        # approximation = grid.calculateScores()
-        # return approximation[player] - approximation[otherPlayer]
 
     # continue searching
     else
         startTime = time_ns()
+        # TODO do move ordering here
+        # Killermoves
+        if length(killerMoves[depth]) == 1
+            if killerMoves[depth][1] in posMoves
+                push!(move_ordering, killerMoves[depth][1])
+            end
+        elseif length(killerMoves[depth]) == 2
+            if killerMoves[depth][1] in posMoves
+                push!(move_ordering, killerMoves[depth][1])
+            end
+            if killerMoves[depth][2] in posMoves
+                push!(move_ordering, killerMoves[depth][2])
+            end
+        end
+        # this places the important moves at the front and the rest in the back
+        # println("Before: ", typeof(move_ordering))
+        # println("Length: ", length(move_ordering))
+        # println("move_ordering: ", move_ordering)
+        move_ordering = vcat(move_ordering, posMoves)
+        # println("After: ", typeof(move_ordering))
+        # println("Length: ", length(move_ordering))
+        # println("move_ordering: ", move_ordering)
+        # this eliminates all duplicates
+        move_ordering = unique(move_ordering)
         # for all possible TURNS: execute them all
-        for (index, move) in enumerate(posMoves)
+        for (index, move) in enumerate(move_ordering)
             # if no time left
             if timeLeft <= (time_ns()-startTime)/1.0e9
                 # println("Not time left --> no write in transpositionTable at this depth")
@@ -185,11 +214,11 @@ function alphaBetaSearch(grid,
             # Other player's turn
             if firstStoneSet
                 grid.setGridValue!(move[1], move[2], 3)
-                newValue = -alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1, posMoves[1:end .!= index], timeLeft-(time_ns()-startTime)/1.0e9, false)
+                newValue = -alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1, move_ordering[1:end .!= index], killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, false)
             # same player's turn, but other stone
             else
                 grid.setGridValue!(move[1], move[2], 2)
-                newValue = alphaBetaSearch(grid, transpositionTable, player, alpha, beta, depth-1, posMoves[1:end .!= index], timeLeft-(time_ns()-startTime)/1.0e9, true)
+                newValue = alphaBetaSearch(grid, transpositionTable, player, alpha, beta, depth-1, move_ordering[1:end .!= index], killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, true)
             end
 
             if newValue > value
@@ -199,6 +228,14 @@ function alphaBetaSearch(grid,
             alpha = max(alpha, value)
             # prune --> no need to look at the other children
             if alpha >= beta
+                # add killermove if not already present
+                if !(move in killerMoves[depth])
+                    if length(killerMoves[depth]) < 2
+                        push!(killerMoves[depth], move)
+                    else
+                        killerMoves[depth][rand(1:2)] = move
+                    end
+                end
                 grid.setGridValue!(move[1], move[2], 1)
                 break
             end

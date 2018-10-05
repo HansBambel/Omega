@@ -92,7 +92,7 @@ function iterativeDeepening(grid, player::Int, posMoves::Array, timeLeft::Float6
     maxDepth = 1
     timeElapsed = 0.0
     while (timeElapsed < timeLeft) & (maxDepth < length(posMoves))
-        push!(killerMoves, [])
+        pushfirst!(killerMoves, [])
         # do alpha-beta-search
         initAlpha = -Inf
         initBeta = Inf
@@ -163,7 +163,7 @@ function alphaBetaSearch(grid,
         end
         push!(move_ordering, ttMove)
     end
-    # TODO more move ordering? killer move? History heuristic? PVS/Aspriation search (delta ~10?)?
+    # TODO more move ordering? History heuristic? PVS/Aspriation search (delta ~10?)?
 
     # if no possible move --> gameover (terminal state)
     if grid.getNumPosMoves() <= 1
@@ -181,16 +181,16 @@ function alphaBetaSearch(grid,
         startTime = time_ns()
         # TODO do move ordering here
         # Killermoves
-        if length(killerMoves[depth]) == 1
-            if killerMoves[depth][1] in posMoves
-                push!(move_ordering, killerMoves[depth][1])
+        if length(killerMoves[end-(depth-1)]) == 1
+            if killerMoves[end-(depth-1)][1] in posMoves
+                push!(move_ordering, killerMoves[end-(depth-1)][1])
             end
-        elseif length(killerMoves[depth]) == 2
-            if killerMoves[depth][1] in posMoves
-                push!(move_ordering, killerMoves[depth][1])
+        elseif length(killerMoves[end-(depth-1)]) == 2
+            if killerMoves[end-(depth-1)][1] in posMoves
+                push!(move_ordering, killerMoves[end-(depth-1)][1])
             end
-            if killerMoves[depth][2] in posMoves
-                push!(move_ordering, killerMoves[depth][2])
+            if killerMoves[end-(depth-1)][2] in posMoves
+                push!(move_ordering, killerMoves[end-(depth-1)][2])
             end
         end
         # this places the important moves at the front and the rest in the back
@@ -229,11 +229,11 @@ function alphaBetaSearch(grid,
             # prune --> no need to look at the other children
             if alpha >= beta
                 # add killermove if not already present
-                if !(move in killerMoves[depth])
-                    if length(killerMoves[depth]) < 2
-                        push!(killerMoves[depth], move)
+                if !(move in killerMoves[end-(depth-1)])
+                    if length(killerMoves[end-(depth-1)]) < 2
+                        push!(killerMoves[end-(depth-1)], move)
                     else
-                        killerMoves[depth][rand(1:2)] = move
+                        killerMoves[end-(depth-1)][rand(1:2)] = move
                     end
                 end
                 grid.setGridValue!(move[1], move[2], 1)

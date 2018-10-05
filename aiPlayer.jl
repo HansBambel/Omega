@@ -161,9 +161,11 @@ function alphaBetaSearch(grid,
                 return ttValue
             end
         end
-        push!(move_ordering, ttMove)
+        if ttMove in posMoves
+            push!(move_ordering, ttMove)
+        end
     end
-    # TODO more move ordering? History heuristic? PVS/Aspriation search (delta ~10?)?
+    # TODO more move ordering? History heuristic? --> PVS/Aspriation search (delta ~10?) (PVS needs good moveordering)?
 
     # if no possible move --> gameover (terminal state)
     if grid.getNumPosMoves() <= 1
@@ -180,7 +182,7 @@ function alphaBetaSearch(grid,
     else
         startTime = time_ns()
         # TODO do move ordering here
-        # Killermoves
+        # Killermoves (stored in reverse order: KillerMoves = [kmovesDepth3, kmovesDepth2, kmovesDepth1])
         if length(killerMoves[end-(depth-1)]) == 1
             if killerMoves[end-(depth-1)][1] in posMoves
                 push!(move_ordering, killerMoves[end-(depth-1)][1])
@@ -194,16 +196,10 @@ function alphaBetaSearch(grid,
             end
         end
         # this places the important moves at the front and the rest in the back
-        # println("Before: ", typeof(move_ordering))
-        # println("Length: ", length(move_ordering))
-        # println("move_ordering: ", move_ordering)
         move_ordering = vcat(move_ordering, posMoves)
-        # println("After: ", typeof(move_ordering))
-        # println("Length: ", length(move_ordering))
-        # println("move_ordering: ", move_ordering)
         # this eliminates all duplicates
         move_ordering = unique(move_ordering)
-        # for all possible TURNS: execute them all
+        # for all possible turns: execute them all
         for (index, move) in enumerate(move_ordering)
             # if no time left
             if timeLeft <= (time_ns()-startTime)/1.0e9

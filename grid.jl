@@ -225,11 +225,10 @@ function Grid()
     end
 
     function calculateScores()::Array{Float64}
-        scores = [1.0, 1.0]
         # println("Is node 12 in the same set as 3? ", find(12, 1) == find(3, 1))
-        scores[1] = prod([groupSize[1][g] for g in Set(groups[1])])
-        scores[2] = prod([groupSize[2][g] for g in Set(groups[2])])
-        return scores
+        scoreP1 = prod([groupSize[1][g] for g in Set(groups[1])])
+        scoreP2 = prod([groupSize[2][g] for g in Set(groups[2])])
+        return [scoreP1, scoreP2]
     end
 
     # hardcoding requires less memory
@@ -342,12 +341,16 @@ end
 # myGrid.setGridValue!(3, 2, 2)
 # myGrid.setGridValue!(9, 4, 2)
 # myGrid.setGridValue!(9, 5, 2)
-# @time myGrid.setGridValue!(4, 6, 3)
-# @time myGrid.setGridValue!(3, 3, 3)
-# @time myGrid.setGridValue!(5, 6, 3)
-# @time myGrid.setGridValue!(4, 3, 3)
+# myGrid.setGridValue!(4, 4, 3)
+# myGrid.setGridValue!(5, 4, 3)
+# myGrid.setGridValue!(6, 4, 3)
+# myGrid.setGridValue!(3, 4, 3)
+# myGrid.setGridValue!(1, 4, 3)
+# myGrid.setGridValue!(4, 7, 3)
+# myGrid.setGridValue!(5, 7, 3)
+# myGrid.setGridValue!(9, 4, 3)
 # myGrid.printBoard()
-# @time myGrid.calculateScores()
+# println(myGrid.calculateScores())
 # @time myGrid.calculateScores()
 # @code_warntype myGrid.calculateScores()
 # @time myGrid.heuristic()

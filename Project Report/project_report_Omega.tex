@@ -23,14 +23,31 @@ The grid has a hashing function for the later use of a transpositiontable. The h
 
 The hexgrid, additionally to having the current boardstate stored, has two lists of groups and groupsizes stored. This enables a fast calculation of the current score. When putting a player stone on the board a new hashcode is calculated and also a union-find algorithm \cite{galler1964improved} with path-splitting is used to update potential new groups. There is a difference to this when a stone of a player is removed (a field is freed up): additionally to storing the current board state, groups and group-sizes I also store the past groups and group-sizes. This makes it easy to revert to a previous state where the latest player stone was not set. This is done because a de-unification and thus updating all the groups is inefficient and requires more overhead.
 
+When calculating the scores it is only required to multiply all values of the player's groupsizes together and not a scan of the whole board is needed.
+
 \section{Implementation of AI}
 The AI is implemented using a negamax search with iterative deepening and using a transposition table. To reduce the branching factor negamax is looking at a single move at each search depth and not a whole turn, which consists of two moves. This reduces the branching factor significantly: On a 6-by-6 boardgame it reduces the branching factor from 8190 to only 91 on the first move. Furthermore, with this division into two separate moves it allows negamax to prune even more resulting in less subtrees that are searched.
 
-Using a transposition table enables iterative deepening to work, since without it the previous search is not used at all and only extends the search space. Furthermore, using a transposition table implicitly applies move ordering thus making iterative deepening more effective.
+\subsection{Transposition table}
+Using a transposition table enables iterative deepening to work, since without it the previous search is not used at all and only extends the search space. Furthermore, using a transposition table applies move ordering thus making iterative deepening more effective.
+
+\subsection{Move ordering}
+Move ordering aims at investigating promising moves first as they may lead to additional pruning, making the tree search more effective.
+In my implementation, the AI investigates first the move that was saved in the transposition table, then it will look into up to two killer-moves. A killer-move is a move that resulted in a cut-off in a previous search at that search depth.
+
+\subsection{Heuristic}
+The heuristic the AI uses only takes groups of two and three into consideration. Those groups are then checked for their free neighbouring hexagons. Every free hexagon of a group-hex serves as a punishment, encouraging \textit{safe} groups (groups that cannot be extended). All other, bigger groups, are disregarded until a terminal state is reached. When a terminal state is reached, the complete score will be calculated, because this score can not be an overestimate since nothing changes any more. This has the effect that even later in the game the AI tries to form groups of two and three.
+
+\subsection{Early Moves}
+When the board is empty the possible moves are very high, but as a human good opening moves are quite easy to spot. A good idea is to put your own stone in the corner of the board while trying to put the other player's stones in the middle. This results in safer groups of your own and unsafe and easily extendible groups of the opponent.
+That is the reason that for the first five turns the AI puts their own stones in the corner of the board and groups the opponent's stones in the middle of the board.
+
+\subsection{Time management}
+What the AI does for time management is the following: it gets the remaining time and calculates how much time it maximally is allowed to use when every turn receives the same amount of search time. Disregarded are the last three turns, which require in total about 15 seconds to find a terminal state. The AI then uses the calculated time window to do a search. At the end of such a search the elapsed time of the search is subtracted from the remaining time resulting in new  search windows for the next search.
 
 \section{Problems}
 \subsection{Heuristic}
-Finding a good heuristic was a key problem. As my old AI-teacher always said: "An admissible heuristics never overestimates." Therefore, using the current score is not suitable because having a high score now can change quickly in the next move when multiple groups are combined to a single one. The heuristic I use only takes groups of two and three into consideration. Those groups are then checked for their free neighbouring hexagons. Every free hexagon of a group-hex serves as a punishment, encouraging \textit{safe} groups (groups that cannot be extended). All other, bigger groups, are disregarded until a terminal state is reached. When a terminal state is reached, the complete score will be calculated, because this score can not be an overestimate since nothing changes any more. This has the effect that even later in the game the AI tries to form groups of two and three.
+Finding a good heuristic was a key problem. As my old AI-teacher always said: "An admissible heuristics never overestimates." Therefore, using the current score is not suitable because having a high score now can change quickly in the next move when multiple groups are combined to a single one. 
 
 \subsection{Side-effects}
 For efficiently calculating scores and evaluating the heuristic I use a union-find algorithm \cite{galler1964improved}. Every time a stone of a player is set on the field the union-find algorithm will unify it with its neighbouring groups if there are any. Unfortunately, separating a group is complicated / computationally inefficient and thus, I save the current groups in a stack. If a separation is necessary, I pop the last entry (where the latest unification occurred) of the stack and use the one before. This way I circumvent a delete function of the union-find algorithm.

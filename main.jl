@@ -1,4 +1,4 @@
-include("gridObject.jl")
+include("grid.jl")
 include("humanPlayer.jl")
 include("randomPlayer.jl")
 include("aiPlayer.jl")

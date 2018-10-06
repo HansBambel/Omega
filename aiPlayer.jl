@@ -105,7 +105,7 @@ function iterativeDeepening(grid, player::Int, posMoves::Array, timeLeft::Float6
     end
     end
 
-    println("KillerMoves: ", killerMoves)
+    # println("KillerMoves: ", killerMoves)
     # look up state in hashmap and return the best turn from it
     if haskey(transpositionTable, grid.getHash())
         # println("Got firstMove")
@@ -165,7 +165,7 @@ function alphaBetaSearch(grid,
             push!(move_ordering, ttMove)
         end
     end
-    # TODO more move ordering? History heuristic? --> PVS/Aspriation search (delta ~10?) (PVS needs good moveordering)?
+    # IDEA more move ordering? History heuristic? --> PVS/Aspriation search (delta ~10?) (PVS needs good moveordering)?
 
     # if no possible move --> gameover (terminal state)
     if grid.getNumPosMoves() <= 1
@@ -173,7 +173,6 @@ function alphaBetaSearch(grid,
         return scores[player]-scores[otherPlayer]
     # not yet gameOver, but max search depth
     elseif depth <= 0
-        # TODO come up with a good heuristic
         # "AN ADMISSABLE HEURISTIC NEVER OVERESTIMATES!" - Helmar Gust
         approximation = grid.heuristic()
         return approximation[player] - approximation[otherPlayer]
@@ -181,8 +180,9 @@ function alphaBetaSearch(grid,
     # continue searching
     else
         startTime = time_ns()
-        # TODO do move ordering here
+        # do move ordering here
         # Killermoves (stored in reverse order: KillerMoves = [kmovesDepth3, kmovesDepth2, kmovesDepth1])
+        # this is due to iterative deepening: when the maxsearchdepth is increased the first depth not be 1 any more, but 2 and so on
         if length(killerMoves[end-(depth-1)]) == 1
             if killerMoves[end-(depth-1)][1] in posMoves
                 push!(move_ordering, killerMoves[end-(depth-1)][1])

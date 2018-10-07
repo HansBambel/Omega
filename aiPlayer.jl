@@ -97,7 +97,7 @@ function iterativeDeepening(grid, player::Int, posMoves::Array, timeLeft::Float6
         initAlpha = -Inf
         initBeta = Inf
         startTime = time_ns()
-        newValue = alphaBetaSearch(grid, transpositionTable, player, initAlpha, initBeta, maxDepth, posMoves, killerMoves, timeLeft-timeElapsed, false)
+        newValue = alphaBetaSearch(grid, transpositionTable, player, initAlpha, initBeta, maxDepth, true, posMoves, killerMoves, timeLeft-timeElapsed, false)
         println("Depth ", maxDepth, " took ", (time_ns()-startTime)/1.0e9,"s Best Value: ", newValue)
         # Write in hashmap
         timeElapsed += (time_ns()-startTime)/1.0e9
@@ -135,6 +135,7 @@ function alphaBetaSearch(grid,
                          alpha::Float64,
                          beta::Float64,
                          depth::Int,
+                         doNull::Bool,
                          posMoves::Array,
                          killerMoves::Array{Array{Array{Int, 1}, 1}, 1},
                          timeLeft::Float64,
@@ -165,7 +166,7 @@ function alphaBetaSearch(grid,
             push!(move_ordering, ttMove)
         end
     end
-    # IDEA more move ordering? History heuristic? --> PVS/Aspriation search (delta ~10?) (PVS needs good moveordering)?
+    # IDEA more move ordering? Null move + Multi-cut? History heuristic? --> PVS/Aspriation search (delta ~10?) (PVS needs good moveordering)?
 
     # if no possible move --> gameover (terminal state)
     if grid.getNumPosMoves() <= 1
@@ -199,6 +200,21 @@ function alphaBetaSearch(grid,
         move_ordering = vcat(move_ordering, posMoves)
         # this eliminates all duplicates
         move_ordering = unique(move_ordering)
+
+        # Do Null move here
+        newValue = -Inf
+        if doNull & (depth%4 == 0)
+            # println("Apply null move!")
+            newValue = -alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1-2, false, move_ordering, killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, false)
+        end
+        if newValue >= beta
+            # println("Pruning!!")
+            return beta
+        end
+        # TODO multi-cut
+
+
+        # regular alpha-beta search:
         # for all possible turns: execute them all
         for (index, move) in enumerate(move_ordering)
             # if no time left
@@ -210,11 +226,11 @@ function alphaBetaSearch(grid,
             # Other player's turn
             if firstStoneSet
                 grid.setGridValue!(move[1], move[2], 3)
-                newValue = -alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1, move_ordering[1:end .!= index], killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, false)
+                newValue = -alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1, true, move_ordering[1:end .!= index], killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, false)
             # same player's turn, but other stone
             else
                 grid.setGridValue!(move[1], move[2], 2)
-                newValue = alphaBetaSearch(grid, transpositionTable, player, alpha, beta, depth-1, move_ordering[1:end .!= index], killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, true)
+                newValue = alphaBetaSearch(grid, transpositionTable, player, alpha, beta, depth-1, true, move_ordering[1:end .!= index], killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, true)
             end
 
             if newValue > value

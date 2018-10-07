@@ -79,9 +79,9 @@ function makeSmartTurn(grid, player::Int, timeLeft::Float64, currentTurn::Int)
 
 end
 
+
 # returns the best turn
 function iterativeDeepening(grid, player::Int, posMoves::Array, timeLeft::Float64)::Array{Array{Int, 1}}
-
     # create transpositionTable(hashmap)
     # TT looks the following: key=grid, value=Tuple(value, flag, searchDepth, bestTurn)
     transpositionTable = Dict{Int64, Tuple{Float64, Int, Int, Array}}()
@@ -92,13 +92,18 @@ function iterativeDeepening(grid, player::Int, posMoves::Array, timeLeft::Float6
     maxDepth = 1
     timeElapsed = 0.0
     while (timeElapsed < timeLeft) & (maxDepth < length(posMoves))
+        global movesInvestigated = 0
         pushfirst!(killerMoves, [])
         # do alpha-beta-search
         initAlpha = -Inf
         initBeta = Inf
         startTime = time_ns()
         newValue = alphaBetaSearch(grid, transpositionTable, player, initAlpha, initBeta, maxDepth, true, posMoves, killerMoves, timeLeft-timeElapsed, false)
-        println("Depth ", maxDepth, " took ", (time_ns()-startTime)/1.0e9,"s Best Value: ", newValue)
+        bestValue, _, _, firstMove = get(transpositionTable, grid.getHash(), (-Inf, 0, 0, posMoves[1]))
+        grid.setGridValue!(firstMove[1], firstMove[2], 2)
+        bestValue, _, _, _ = get(transpositionTable, grid.getHash(), (-Inf, 0, 0, posMoves[1]))
+        grid.setGridValue!(firstMove[1], firstMove[2], 1)
+        println("Depth ", maxDepth, " took ", (time_ns()-startTime)/1.0e9,"s Best Value: ", bestValue, " Moves investigated: ", movesInvestigated)
         # Write in hashmap
         timeElapsed += (time_ns()-startTime)/1.0e9
         maxDepth += 1
@@ -202,17 +207,50 @@ function alphaBetaSearch(grid,
         move_ordering = unique(move_ordering)
 
         # Do Null move here
+        R = 2
         newValue = -Inf
-        if doNull & (depth%4 == 0)
+        if doNull & (depth%2 == 0)
             # println("Apply null move!")
-            newValue = -alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1-2, false, move_ordering, killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, false)
+            newValue = -alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1-R, false, move_ordering, killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, false)
         end
         if newValue >= beta
             # println("Pruning!!")
             return beta
         end
         # TODO multi-cut
-
+        if depth >= 4
+            C = 3
+            M = 10
+            let
+            c = 0
+            for (index, move) in enumerate(move_ordering)
+                global movesInvestigated += 1
+                if index >= M
+                    break
+                end
+                # do a move and check for the next M searches with lower search depth whether at least C prunings occur
+                if firstStoneSet
+                    grid.setGridValue!(move[1], move[2], 3)
+                    newValue = -alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1-R, true, move_ordering[1:end .!= index], killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, false)
+                # same player's turn, but other stone
+                else
+                    grid.setGridValue!(move[1], move[2], 2)
+                    newValue = alphaBetaSearch(grid, transpositionTable, player, alpha, beta, depth-1-R, true, move_ordering[1:end .!= index], killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, true)
+                end
+                if newValue >= beta
+                    c += 1
+                    if c >= C
+                        # undo move
+                        grid.setGridValue!(move[1], move[2], 1)
+                        # println("multi cut pruning!")
+                        return beta
+                    end
+                end
+                # undo the move
+                grid.setGridValue!(move[1], move[2], 1)
+            end
+            end
+        end
 
         # regular alpha-beta search:
         # for all possible turns: execute them all
@@ -222,6 +260,7 @@ function alphaBetaSearch(grid,
                 # println("Not time left --> no write in transpositionTable at this depth")
                 return value
             end
+            global movesInvestigated += 1
             # do deeper search there
             # Other player's turn
             if firstStoneSet

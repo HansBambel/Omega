@@ -42,6 +42,10 @@ The heuristic the AI uses only takes groups of two and three into consideration.
 When the board is empty the possible moves are very high, but as a human good opening moves are quite easy to spot. A good idea is to put your own stone in the corner of the board while trying to put the other player's stones in the middle. This results in safer groups of your own and unsafe and easily extendible groups of the opponent.
 That is the reason that for the first five turns the AI puts their own stones in the corner of the board and groups the opponent's stones in the middle of the board.
 
+\subsection{Null move}
+
+\subsection{Multi-cut}
+
 \subsection{Time management}
 What the AI does for time management is the following: it gets the remaining time and calculates how much time it maximally is allowed to use when every turn receives the same amount of search time. Disregarded are the last three turns, which require in total about 15 seconds to find a terminal state. The AI then uses the calculated time window to do a search. At the end of such a search the elapsed time of the search is subtracted from the remaining time resulting in new  search windows for the next search.
 

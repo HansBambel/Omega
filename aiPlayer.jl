@@ -255,10 +255,13 @@ function alphaBetaSearch(grid,
         # regular alpha-beta search:
         # for all possible turns: execute them all
         for (index, move) in enumerate(move_ordering)
-            # if no time left
-            if timeLeft <= (time_ns()-startTime)/1.0e9
-                # println("Not time left --> no write in transpositionTable at this depth")
-                return value
+            # check every 1000 moves
+            if movesInvestigated%1000 == 0
+                # if no time left
+                if timeLeft <= (time_ns()-startTime)/1.0e9
+                    # println("Not time left --> no write in transpositionTable at this depth")
+                    return value
+                end
             end
             global movesInvestigated += 1
             # do deeper search there

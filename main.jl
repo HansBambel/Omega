@@ -27,7 +27,7 @@ hexgrid.initializeGrid(gridSize)
 hexgrid.printBoard()
 
 ### This is the time the AI is allowed to have
-totalTurnTime = 2*60.0
+totalTurnTime = 4*60.0
 timeAIneeded = 0
 turn = 0
 while(!hexgrid.gameOver(numPlayers))

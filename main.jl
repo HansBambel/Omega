@@ -1,7 +1,8 @@
 include("grid.jl")
 include("humanPlayer.jl")
 include("randomPlayer.jl")
-include("aiPlayer.jl")
+include("bestAiPlayer.jl")
+include("alphaBetaAiPlayer.jl")
 
 # https://unicode-table.com/en/
 # const global PLAYERCOLORS = ["W", "B", "R", "G"]
@@ -26,9 +27,12 @@ hexgrid = Grid()
 hexgrid.initializeGrid(gridSize)
 hexgrid.printBoard()
 
+bestAI = BestAI()
+alphaBetaAI = simpleAlphaBetaAI()
 ### This is the time the AI is allowed to have
 totalTurnTime = 4*60.0
-timeAIneeded = 0
+timeBestAIneeded = 0
+timeAlphaBetaAIneeded = 0
 turn = 0
 while(!hexgrid.gameOver(numPlayers))
     # each player after the other
@@ -39,20 +43,32 @@ while(!hexgrid.gameOver(numPlayers))
             println("####   TURN ", turn, ": RANDOM PLAYER ", PLAYERCOLORS[p], "   ####")
             makeRandomTurn(hexgrid, numPlayers)
         elseif (players[p] == 'a') | (players[p] == 'A')
-            println("####   TURN ", turn, ": AI PLAYER ", PLAYERCOLORS[p], "   ####")
-            timeForTurn = @elapsed makeSmartTurn(hexgrid, p, totalTurnTime-timeAIneeded, turn)
-            global timeAIneeded += timeForTurn
-            println("AI needed ", timeAIneeded, "s of its given ", totalTurnTime, "s")
+            println("####   TURN ", turn, ": Best AI PLAYER ", PLAYERCOLORS[p], "   ####")
+            timeForTurn = @elapsed bestAI.makeSmartTurn(hexgrid, p, totalTurnTime-timeBestAIneeded, turn)
+            global timeBestAIneeded += timeForTurn
+            println("Best AI needed ", timeBestAIneeded, "s of its given ", totalTurnTime, "s")
+        elseif (players[p] == 'd') | (players[p] == 'D')
+            println("####   TURN ", turn, ": Alpha-Beta AI PLAYER ", PLAYERCOLORS[p], "   ####")
+            timeForTurn = @elapsed alphaBetaAI.makeSmartTurn(hexgrid, p, totalTurnTime-timeAlphaBetaAIneeded, turn)
+            global timeAlphaBetaAIneeded += timeForTurn
+            println("Alpha-Beta AI needed ", timeAlphaBetaAIneeded, "s of its given ", totalTurnTime, "s")
         elseif (players[p] == 'h') | (players[p] == 'H')
             println("####   TURN ", turn, ": HUMAN PLAYER ", PLAYERCOLORS[p], "   ####")
             makeTurn(hexgrid, numPlayers)
+        else
+            println("No player such player: ", players[p])
+            break
         end
         println("Current Score: ", hexgrid.calculateScores())
         println("Current Heuristic: ", hexgrid.heuristic())
     end
 end
+
 if 'a' in players
-    println("AI needed ", timeAIneeded, "s of its ", totalTurnTime, "s.")
+    println("Best AI needed ", timeBestAIneeded, "s of its ", totalTurnTime, "s.")
+end
+if 'd' in players
+    println("Alpha Beta AI needed ", timeAlphaBetaAIneeded, "s of its ", totalTurnTime, "s.")
 end
 println("### Game ended ###")
 scores = hexgrid.calculateScores()

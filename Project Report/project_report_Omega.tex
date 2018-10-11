@@ -37,14 +37,17 @@ In my implementation, the AI investigates first the move that was saved in the t
 
 \subsection{Heuristic}
 The heuristic the AI uses only takes groups of two and three into consideration. Those groups are then checked for their free neighbouring hexagons. Every free hexagon of a group-hex serves as a punishment, encouraging \textit{safe} groups (groups that cannot be extended). All other, bigger groups, are disregarded until a terminal state is reached. When a terminal state is reached, the complete score will be calculated, because this score can not be an overestimate since nothing changes any more. This has the effect that even later in the game the AI tries to form groups of two and three.
+Additionally, the current score of both players is also taken into account. In order to favour in the early game the heuristic value and later in the game the current score a discard factor depending on the remaining moves weighs both of these values.
 
 \subsection{Early Moves}
 When the board is empty the possible moves are very high, but as a human good opening moves are quite easy to spot. A good idea is to put your own stone in the corner of the board while trying to put the other player's stones in the middle. This results in safer groups of your own and unsafe and easily extendible groups of the opponent.
 That is the reason that for the first five turns the AI puts their own stones in the corner of the board and groups the opponent's stones in the middle of the board.
 
 \subsection{Null move}
+Using a null-move should improve the search depth even further. It assumes that when passing your turn, you are still in a good spot later on, you can do even better when actually making a move. Since the search depth when doing a null-move is more shallow, it requires less time to return a value. A null-move should not follow a previous null-move, otherwise people would just skip all the time. In order to avoid this the null-move flag is disabled after executing a null-move.
 
 \subsection{Multi-cut}
+Another enhancement which the AI uses is multi-cut. Multi-cut assumes that when there are a certain amount of prunings already at the beginning of a (shallower) search then there will be even more later on. This is a form of forward pruning and may be more aggressive resulting in incorrect or bad prunings. The AI prunes where there are at least three children out of ten where a cut-off occurred.
 
 \subsection{Time management}
 What the AI does for time management is the following: it gets the remaining time and calculates how much time it maximally is allowed to use when every turn receives the same amount of search time. Disregarded are the last three turns, which require in total about 15 seconds to find a terminal state. The AI then uses the calculated time window to do a search. At the end of such a search the elapsed time of the search is subtracted from the remaining time resulting in new  search windows for the next search.

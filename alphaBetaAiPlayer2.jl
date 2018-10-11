@@ -180,10 +180,7 @@ function simpleAlphaBetaAI()
         # not yet gameOver, but max search depth
         elseif depth <= 0
             # "AN ADMISSABLE HEURISTIC NEVER OVERESTIMATES!" - Helmar Gust
-            score = grid.calculateScores()
-            heuristicScore = grid.heuristic()
-            # the less moves are available (lategame) the more the current score counts
-            approximation = score/grid.getNumPosMoves() + heuristicScore*(1.0-1.0/grid.getNumPosMoves())
+            approximation = grid.heuristic()
             return approximation[player] - approximation[otherPlayer], false
 
         # continue searching
@@ -205,12 +202,13 @@ function simpleAlphaBetaAI()
             #         push!(move_ordering, killerMoves[end-(depth-1)][2])
             #     end
             # end
+
             # this places the important moves at the front and the rest in the back
             move_ordering = vcat(move_ordering, posMoves)
             # this eliminates all duplicates
             move_ordering = unique(move_ordering)
 
-            ### Do Null move here ###
+            # ### Do Null move here ###
             # R = 2
             # newValue = -Inf
             # if doNull #& (depth%2 == 0)
@@ -224,7 +222,6 @@ function simpleAlphaBetaAI()
             #     # println("Pruning!!")
             #     return beta, timeOut
             # end
-            #
             # ### Do multi-cut now ###
             # if depth >= 4
             #     C = 3

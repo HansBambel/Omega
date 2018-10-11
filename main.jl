@@ -30,7 +30,7 @@ hexgrid.printBoard()
 bestAI = BestAI()
 alphaBetaAI = simpleAlphaBetaAI()
 ### This is the time the AI is allowed to have
-totalTurnTime = 4*60.0
+totalTurnTime = 10*60.0
 timeBestAIneeded = 0
 timeAlphaBetaAIneeded = 0
 turn = 0

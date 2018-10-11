@@ -24,6 +24,7 @@ function Grid()
     offset::Int = 0
     numPossibleMoves::Int = 0
     currentHash::Int64 = 1337
+    playerSwap::Int64 = 1
     hashArray = Array
     history = Array{Array{Array{Array{Int64,1},1},1},1}(undef, 1)
 
@@ -50,12 +51,13 @@ function Grid()
         offset = Int((size(grid)[1]-1)/2)
         for i = 1:2*gridSize-1
             for j = 1:2*gridSize-1
-                for k = 1:5
+                for k = 1:3
                     hashArray[i, j, k] = rand(Int64)
                 end
             end
         end
         currentHash = rand(Int64)
+        playerSwap = rand(Int64)
         groups = [collect(1:numPossibleMoves), collect(1:numPossibleMoves)]
         groupSize = [ones(Int, numPossibleMoves), ones(Int, numPossibleMoves)]
         history = [deepcopy([groups, groupSize])]
@@ -108,6 +110,10 @@ function Grid()
             end
             return grid
         end
+    end
+
+    function changePlayer()
+        currentHash = currentHash ⊻ playerSwap
     end
 
     function unifySameNeighbors(hexfield::Array{Int}, value::Int)
@@ -306,6 +312,7 @@ function Grid()
            initializeGrid;
            getGridValue;
            setGridValue!;
+           changePlayer;
            printBoard;
            printArray;
            gameOver;

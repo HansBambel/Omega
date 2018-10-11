@@ -98,13 +98,12 @@ function iterativeDeepening(grid, player::Int, posMoves::Array, timeLeft::Float6
         initAlpha = -Inf
         initBeta = Inf
         startTime = time_ns()
-        newValue = alphaBetaSearch(grid, transpositionTable, player, initAlpha, initBeta, maxDepth, true, posMoves, killerMoves, timeLeft-timeElapsed, false)
+        newValue, _ = alphaBetaSearch(grid, transpositionTable, player, initAlpha, initBeta, maxDepth, true, posMoves, killerMoves, timeLeft-timeElapsed, false)
         bestValue, _, _, firstMove = get(transpositionTable, grid.getHash(), (-Inf, 0, 0, posMoves[1]))
         grid.setGridValue!(firstMove[1], firstMove[2], 2)
         bestValue, _, _, _ = get(transpositionTable, grid.getHash(), (-Inf, 0, 0, posMoves[1]))
         grid.setGridValue!(firstMove[1], firstMove[2], 1)
         println("Depth ", maxDepth, " took ", (time_ns()-startTime)/1.0e9,"s Best Value: ", bestValue, " Moves investigated: ", movesInvestigated)
-        # Write in hashmap
         timeElapsed += (time_ns()-startTime)/1.0e9
         maxDepth += 1
     end
@@ -144,7 +143,7 @@ function alphaBetaSearch(grid,
                          posMoves::Array,
                          killerMoves::Array{Array{Array{Int, 1}, 1}, 1},
                          timeLeft::Float64,
-                         firstStoneSet::Bool)::Float64
+                         firstStoneSet::Bool)::Tuple{Float64, Bool}
     otherPlayer = player == 1 ? 2 : 1
     oldAlpha = alpha
     value = -Inf # this needs to be outside the "if" because... Julia
@@ -156,7 +155,7 @@ function alphaBetaSearch(grid,
         # check if we already have been here and get info
         if ttDepth >= depth
             if ttFlag == EXACT
-                return ttValue
+                return ttValue, false
             elseif ttFlag == LOWER
                 alpha = max(alpha, ttValue)
             elseif ttFlag == UPPER
@@ -164,7 +163,7 @@ function alphaBetaSearch(grid,
             end
 
             if alpha >= beta
-                return ttValue
+                return ttValue, false
             end
         end
         if ttMove in posMoves
@@ -176,16 +175,17 @@ function alphaBetaSearch(grid,
     # if no possible move --> gameover (terminal state)
     if grid.getNumPosMoves() <= 1
         scores = grid.calculateScores()
-        return scores[player]-scores[otherPlayer]
+        return scores[player]-scores[otherPlayer], false
     # not yet gameOver, but max search depth
     elseif depth <= 0
         # "AN ADMISSABLE HEURISTIC NEVER OVERESTIMATES!" - Helmar Gust
         approximation = grid.heuristic()
-        return approximation[player] - approximation[otherPlayer]
+        return approximation[player] - approximation[otherPlayer], false
 
     # continue searching
     else
         startTime = time_ns()
+        timeOut = false
         # do move ordering here
         # Killermoves (stored in reverse order: KillerMoves = [kmovesDepth3, kmovesDepth2, kmovesDepth1])
         # this is due to iterative deepening: when the maxsearchdepth is increased the first depth not be 1 any more, but 2 and so on
@@ -211,13 +211,14 @@ function alphaBetaSearch(grid,
         newValue = -Inf
         if doNull & (depth%2 == 0)
             # println("Apply null move!")
-            newValue = -alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1-R, false, move_ordering, killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, false)
+            newValue, timeOut = alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1-R, false, move_ordering, killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, false)
+            newValue = -newValue
         end
         if newValue >= beta
             # println("Pruning!!")
-            return beta
+            return beta, timeOut
         end
-        # TODO multi-cut
+        # Do multi-cut now
         if depth >= 4
             C = 3
             M = 10
@@ -231,11 +232,12 @@ function alphaBetaSearch(grid,
                 # do a move and check for the next M searches with lower search depth whether at least C prunings occur
                 if firstStoneSet
                     grid.setGridValue!(move[1], move[2], 3)
-                    newValue = -alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1-R, true, move_ordering[1:end .!= index], killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, false)
+                    newValue, timeOut = alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1-R, true, move_ordering[1:end .!= index], killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, false)
+                    newValue = -newValue
                 # same player's turn, but other stone
                 else
                     grid.setGridValue!(move[1], move[2], 2)
-                    newValue = alphaBetaSearch(grid, transpositionTable, player, alpha, beta, depth-1-R, true, move_ordering[1:end .!= index], killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, true)
+                    newValue, timeOut = alphaBetaSearch(grid, transpositionTable, player, alpha, beta, depth-1-R, true, move_ordering[1:end .!= index], killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, true)
                 end
                 if newValue >= beta
                     c += 1
@@ -243,7 +245,7 @@ function alphaBetaSearch(grid,
                         # undo move
                         grid.setGridValue!(move[1], move[2], 1)
                         # println("multi cut pruning!")
-                        return beta
+                        return beta, timeOut
                     end
                 end
                 # undo the move
@@ -260,7 +262,7 @@ function alphaBetaSearch(grid,
                 # if no time left
                 if timeLeft <= (time_ns()-startTime)/1.0e9
                     # println("Not time left --> no write in transpositionTable at this depth")
-                    return value
+                    return value, true
                 end
             end
             global movesInvestigated += 1
@@ -268,11 +270,12 @@ function alphaBetaSearch(grid,
             # Other player's turn
             if firstStoneSet
                 grid.setGridValue!(move[1], move[2], 3)
-                newValue = -alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1, true, move_ordering[1:end .!= index], killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, false)
+                newValue, timeOut = alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1, true, move_ordering[1:end .!= index], killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, false)
+                newValue = -newValue
             # same player's turn, but other stone
             else
                 grid.setGridValue!(move[1], move[2], 2)
-                newValue = alphaBetaSearch(grid, transpositionTable, player, alpha, beta, depth-1, true, move_ordering[1:end .!= index], killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, true)
+                newValue, timeOut = alphaBetaSearch(grid, transpositionTable, player, alpha, beta, depth-1, true, move_ordering[1:end .!= index], killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, true)
             end
 
             if newValue > value
@@ -298,16 +301,19 @@ function alphaBetaSearch(grid,
             grid.setGridValue!(move[1], move[2], 1)
         end
 
-        # Store (more accurate) result in transpositionTable
-        if value <= oldAlpha
-            transpositionTable[grid.getHash()] = value, UPPER, depth, bestMove
-        elseif value >= beta
-            transpositionTable[grid.getHash()] = value, LOWER, depth, bestMove
-        else
-            transpositionTable[grid.getHash()] = value, EXACT, depth, bestMove
+        # Store (more accurate) result in transpositionTable if there did not occur a timeout
+        # a result from a timeout would not be accurate and thus should not be stored
+        if !timeOut
+            if value <= oldAlpha
+                transpositionTable[grid.getHash()] = value, UPPER, depth, bestMove
+            elseif value >= beta
+                transpositionTable[grid.getHash()] = value, LOWER, depth, bestMove
+            else
+                transpositionTable[grid.getHash()] = value, EXACT, depth, bestMove
+            end
         end
 
         # this is the value that alphaBeta/negamax returned
-        return value
+        return value, timeOut
     end
 end

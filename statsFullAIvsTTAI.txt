@@ -1,3 +1,4 @@
+### Full AI is Triangle
 ✕ has scored: 145824.0 points
 △ has scored: 116.0 points
 ✕ is the Winner!
@@ -27,4 +28,35 @@
 ✕ is the Winner!
 ✕ has scored: 80352.0 points
 △ has scored: 232.0 points
+✕ is the Winner!
+### Full AI is now X
+✕ has scored: 18000.0 points
+△ has scored: 720.0 points
+✕ is the Winner!
+✕ has scored: 12540.0 points
+△ has scored: 2576.0 points
+✕ is the Winner!
+✕ has scored: 12540.0 points
+△ has scored: 2576.0 points
+✕ is the Winner!
+✕ has scored: 69300.0 points
+△ has scored: 816.0 points
+✕ is the Winner!
+✕ has scored: 12540.0 points
+△ has scored: 2576.0 points
+✕ is the Winner!
+✕ has scored: 12540.0 points
+△ has scored: 2576.0 points
+✕ is the Winner!
+✕ has scored: 69300.0 points
+△ has scored: 816.0 points
+✕ is the Winner!
+✕ has scored: 69300.0 points
+△ has scored: 816.0 points
+✕ is the Winner!
+✕ has scored: 12540.0 points
+△ has scored: 2576.0 points
+✕ is the Winner!
+✕ has scored: 69300.0 points
+△ has scored: 816.0 points
 ✕ is the Winner!

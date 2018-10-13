@@ -29,3 +29,34 @@
 ✕ has scored: 27552.0 points
 △ has scored: 2520.0 points
 ✕ is the Winner!
+### FullAI is X
+✕ has scored: 2236.0 points
+△ has scored: 19040.0 points
+△ is the Winner!
+✕ has scored: 163296.0 points
+△ has scored: 118.0 points
+✕ is the Winner!
+✕ has scored: 163296.0 points
+△ has scored: 118.0 points
+✕ is the Winner!
+✕ has scored: 163296.0 points
+△ has scored: 118.0 points
+✕ is the Winner!
+✕ has scored: 25200.0 points
+△ has scored: 118.0 points
+✕ is the Winner!
+✕ has scored: 97200.0 points
+△ has scored: 7728.0 points
+✕ is the Winner!
+✕ has scored: 163296.0 points
+△ has scored: 118.0 points
+✕ is the Winner!
+✕ has scored: 50220.0 points
+△ has scored: 3960.0 points
+✕ is the Winner!
+✕ has scored: 163296.0 points
+△ has scored: 118.0 points
+✕ is the Winner!
+✕ has scored: 36450.0 points
+△ has scored: 280.0 points
+✕ is the Winner!

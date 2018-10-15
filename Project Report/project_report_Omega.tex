@@ -1,5 +1,6 @@
 \documentclass[a4paper]{article}
 \usepackage{hyperref}
+\usepackage{graphicx}
 
 \title{Project Report Omega}
 
@@ -14,30 +15,34 @@
 \section{Description of the game}
 
 \section{Choice of programming language}
-I chose the programming language Julia. Since Mark told us that Python is quite slow, the programming language I'm most comfortable with fell through and I had to choose another one. Julia is quite new (version 1.0 came out on 8th of August 2018) \cite{julia1} and has a similar syntax like Python but was created for high performance computations. There it is possible to have C-like speeds \cite{benchmarks}. Although this is mainly useful for data analysis and machine learning I wanted to try it out for this project. Furthermore, it is possible to import Python and C packages.
+I chose the programming language Julia. Since Mark told us that Python is quite slow, the programming language I'm most comfortable with fell through and I had to choose another one. Julia is quite new (version 1.0 came out on 8th of August 2018) \cite{julia1} and has a similar syntax like Python but was created for high performance computations. With Julia it is possible to have C-like speeds \cite{benchmarks}. Although this is mainly useful for data analysis and machine learning I wanted to try it out for this project. Furthermore, it is possible to import Python and C packages which can be useful if there is no native Julia package released yet.
 
 \section{Details of implementation}
 I chose to implement Omega on the command-line because Julia has no native graphical user interface library and it seemed to me a bit too much work to learn to program a GUI in Julia using another library additionally to learning Julia in the first place. Using unicode symbols still makes the graphical board representation appealing and useful.
+
+\includegraphics[scale=0.5]{"Sample interface"}
+
 
 The grid has a hashing function for the later use of a transpositiontable. The hashing is done using zobrist hashing \cite{zobrist1970new} to be computationally efficient. A random 64-bit Integer is created when the grid is initialized to represent the empty board. Then, for every hexfield three 64-bit Integer values are generated representing that this field can be either free or have a white or a black stone on it. When a stone is set on the grid, the corresponding Integer of the previous occupying stone is removed from the old hashvalue using the XOR operation. Then, the new stone is inserted to the hashcode using the XOR operation with the corresponding Integer of the new stone.
 
 The hexgrid, additionally to having the current boardstate stored, has two lists of groups and groupsizes stored. This enables a fast calculation of the current score. When putting a player stone on the board a new hashcode is calculated and also a union-find algorithm \cite{galler1964improved} with path-splitting is used to update potential new groups. There is a difference to this when a stone of a player is removed (a field is freed up): additionally to storing the current board state, groups and group-sizes I also store the past groups and group-sizes. This makes it easy to revert to a previous state where the latest player stone was not set. This is done because a de-unification and thus updating all the groups is inefficient and requires more overhead.
 
-When calculating the scores it is only required to multiply all values of the player's groupsizes together and not a scan of the whole board is needed.
+When calculating the scores it is only required to multiply all values of the player's group-sizes together and not a scan of the whole board is needed.
 
 \section{Implementation of AI}
 The AI is implemented using a negamax search with iterative deepening and using a transposition table. To reduce the branching factor negamax is looking at a single move at each search depth and not a whole turn, which consists of two moves. This reduces the branching factor significantly: On a 6-by-6 boardgame it reduces the branching factor from 8190 to only 91 on the first move. Furthermore, with this division into two separate moves it allows negamax to prune even more resulting in less subtrees that are searched.
 
 \subsection{Transposition table}
-Using a transposition table enables iterative deepening to work, since without it the previous search is not used at all and only extends the search space. Furthermore, using a transposition table applies move ordering thus making iterative deepening more effective.
+Using a transposition table enables iterative deepening to work, since without it the previous search is not used at all and only extends the search space. Furthermore, using a transposition table applies move ordering thus making iterative deepening more effective. As previously already mentioned, the transposition table is implemented using Zobrist-hashing.
 
 \subsection{Move ordering}
 Move ordering aims at investigating promising moves first as they may lead to additional pruning, making the tree search more effective.
 In my implementation, the AI investigates first the move that was saved in the transposition table, then it will look into up to two killer-moves. A killer-move is a move that resulted in a cut-off in a previous search at that search depth.
 
 \subsection{Heuristic}
-The heuristic the AI uses only takes groups of two and three into consideration. Those groups are then checked for their free neighbouring hexagons. Every free hexagon of a group-hex serves as a punishment, encouraging \textit{safe} groups (groups that cannot be extended). All other, bigger groups, are disregarded until a terminal state is reached. When a terminal state is reached, the complete score will be calculated, because this score can not be an overestimate since nothing changes any more. This has the effect that even later in the game the AI tries to form groups of two and three.
-Additionally, the current score of both players is also taken into account. In order to favour in the early game the heuristic value and later in the game the current score a discard factor depending on the remaining moves weighs both of these values.
+The heuristic the AI uses consists of two scores. The first only takes groups of two and three into consideration. Those groups are then checked for their free neighbouring hexagons. Every free hexagon of a group-hex serves as a punishment, encouraging \textit{safe} groups (groups that cannot be extended). All other, bigger groups, are disregarded until a terminal state is reached. The second score is the current board score. The final heuristic score consists of a weighting of these scores. The further the game progresses the more the current score will be taken into account and less the first score.
+
+When a terminal state is reached, the complete score will be calculated, because this score can not be an overestimate since nothing changes any more. This weighting of both scores has the effect that even later in the game the AI tries to form groups of two and three.
 
 \subsection{Early Moves}
 When the board is empty the possible moves are very high, but as a human good opening moves are quite easy to spot. A good idea is to put your own stone in the corner of the board while trying to put the other player's stones in the middle. This results in safer groups of your own and unsafe and easily extendible groups of the opponent.
@@ -54,12 +59,16 @@ What the AI does for time management is the following: it gets the remaining tim
 
 \section{Problems}
 \subsection{Heuristic}
-Finding a good heuristic was a key problem. As my old AI-teacher always said: "An admissible heuristics never overestimates." Therefore, using the current score is not suitable because having a high score now can change quickly in the next move when multiple groups are combined to a single one. 
+Finding a good heuristic was a key problem. As my old AI-teacher always said: "An admissible heuristics never overestimates." Therefore, using the current score is not suitable because having a high score now can change quickly in the next move when multiple groups are combined to a single one. In the earlier state of the game the score is not that important, making the heuristic useful for that part of the game. Due to the fact that the heuristic does not take into account bigger groups of the players, which could occur over the mid and late-game it will become less suitable for later stages of the game. In order to compensate for that I decided to also take the current score into account. The current score is multiplied with a discount factor that decreases the further the game progresses.
 
 \subsection{Side-effects}
 For efficiently calculating scores and evaluating the heuristic I use a union-find algorithm \cite{galler1964improved}. Every time a stone of a player is set on the field the union-find algorithm will unify it with its neighbouring groups if there are any. Unfortunately, separating a group is complicated / computationally inefficient and thus, I save the current groups in a stack. If a separation is necessary, I pop the last entry (where the latest unification occurred) of the stack and use the one before. This way I circumvent a delete function of the union-find algorithm.
 A problem I had was that the scores were not calculated correctly when the AI-player was searching. Even trying reproducing the exact same moves by hand did not reproduce the same bug. After 10 mind-boggling hours I found out that I needed to create a deepcopy of the latest entry to not have side-effects later on.
 
+\section{Experiments}
+In this section I will compare the different enhancements and how much of a difference they make. The time for the AI was 10 minutes across all experiments on a board size 7.
+In order to see which enhancement was the most effective I let different versions of the AI play against itself.
+Surprisingly, it seemed that the one who started first won in about 96\% of the games.
 
 \bibliography{omegabib}
 \bibliographystyle{abbrv}

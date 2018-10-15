@@ -198,6 +198,7 @@ function BestAI()
                     push!(move_ordering, killerMoves[end-(depth-1)][1])
                 end
             elseif length(killerMoves[end-(depth-1)]) == 2
+                # check whether the stored killer move is currently possible
                 if killerMoves[end-(depth-1)][1] in posMoves
                     push!(move_ordering, killerMoves[end-(depth-1)][1])
                 end
@@ -224,7 +225,7 @@ function BestAI()
                 # println("Pruning!!")
                 return beta, timeOut
             end
-            
+
             ### Do multi-cut now ###
             if depth >= 4
                 C = 3
@@ -240,7 +241,7 @@ function BestAI()
                     if firstStoneSet
                         grid.setGridValue!(move[1], move[2], 3)
                         grid.changePlayer()
-                        newValue, timeOut = alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1-R,  true, move_ordering[1:end .!= index], killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, false)
+                        newValue, timeOut = alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1-R, true, move_ordering[1:end .!= index], killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, false)
                         newValue = -newValue
                         grid.changePlayer()
                     # same player's turn, but other stone (note that doNull is false)

@@ -25,13 +25,19 @@ function simpleAlphaBetaAI()
         gridOffset::Int = grid.getOffset()
         otherPlayer::Int = player == 1 ? 2 : 1
         # best opening move
+        # if false
         if currentTurn == 1
             bestTurn[player] = [2*gridOffset+1, gridOffset+1]
             bestTurn[otherPlayer] = [gridOffset+1, gridOffset+1]
             grid.setGridValue!(bestTurn[player][1], bestTurn[player][2], player+1)
             grid.setGridValue!(bestTurn[otherPlayer][1], bestTurn[otherPlayer][2], otherPlayer+1)
-        elseif currentTurn < 6
-            # bottem right corner
+        elseif (([2*gridOffset+1, gridOffset+1] in posMoves)|
+                ([2*gridOffset+1, 1] in posMoves)|
+                ([gridOffset+1, 2*gridOffset+1] in posMoves)|
+                ([gridOffset+1, 1] in posMoves)|
+                ([1, gridOffset+1] in posMoves)|
+                ([1, 1] in posMoves))
+            # bottom right corner
             if [2*gridOffset+1, gridOffset+1] in posMoves
                 bestTurn[player] = [2*gridOffset+1, gridOffset+1]
             # bottom left corner
@@ -50,7 +56,8 @@ function simpleAlphaBetaAI()
             elseif [1, 1] in posMoves
                 bestTurn[player] = [1, 1]
             end
-            bestTurn[otherPlayer] = posMoves[length(posMoves) ÷ 2]
+            # group the other players stone in the middle
+            bestTurn[otherPlayer] = posMoves[(length(posMoves)+1) ÷ 2]
             grid.setGridValue!(bestTurn[player][1], bestTurn[player][2], player+1)
             grid.setGridValue!(bestTurn[otherPlayer][1], bestTurn[otherPlayer][2], otherPlayer+1)
         else
@@ -234,12 +241,20 @@ function simpleAlphaBetaAI()
             #     for (index, move) in enumerate(move_ordering)
             #         if index >= M
             #             break
-            #         end
-            #         global movesInvestigated += 1
-            #         # do a move and check for the next M searches with lower search depth whether at least C prunings occur
-            #         if firstStoneSet
-            #             grid.setGridValue!(move[1], move[2], 3)
-            #             grid.changePlayer()
+                    # end
+                    # global movesInvestigated += 1
+                    # # check every 1000 moves
+                    # if movesInvestigated%1000 == 0
+                    #     # if no time left
+                    #     if timeLeft <= (time_ns()-startTime)/1.0e9
+                    #         # println("Not time left --> no write in transpositionTable at this depth")
+                    #         return value, true
+                    #     end
+                    # end
+                    # # do a move and check for the next M searches with lower search depth whether at least C prunings occur
+                    # if firstStoneSet
+                    #     grid.setGridValue!(move[1], move[2], 3)
+                    #     grid.changePlayer()
             #             newValue, timeOut = alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1-R,  true, move_ordering[1:end .!= index], killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, false)
             #             newValue = -newValue
             #             grid.changePlayer()

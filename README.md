@@ -8,7 +8,6 @@
   - Printf
   - IterTools
   - DataStructures
-  - ProgressMeter
 - exit julia (Ctrl + D)
 - Switch to the Omega folder
 - run "julia main.jl" and play Omega

@@ -14,8 +14,18 @@
 
 \section{Description of the game}
 
+
 \section{Choice of programming language}
 I chose the programming language Julia. Since Mark told us that Python is quite slow, the programming language I'm most comfortable with fell through and I had to choose another one. Julia is quite new (version 1.0 came out on 8th of August 2018) \cite{julia1} and has a similar syntax like Python but was created for high performance computations. With Julia it is possible to have C-like speeds \cite{benchmarks}. Although this is mainly useful for data analysis and machine learning I wanted to try it out for this project. Furthermore, it is possible to import Python and C packages which can be useful if there is no native Julia package released yet.
+
+\section{Usage of the program}
+In order to use the implementation Julia needs to be installed. To do this go to \url{https://julialang.org/downloads/} and download it. For easier use you can add Julia to your Path variable. Since my implementation uses packages that are not installed natively you need to run Julia and open the so called REPL (Read-eval-print-loop). Type 'using Pkg' (this is the package installer of Julia) followed by the following statements: 'Pkg.add("Printf")', 'Pkg.add("IterTools")' and finally 'Pkg.add("DataStructures")'.
+
+With Julia correctly set up you can go to the directory of my implementation (\url{https://github.com/HansBambel/Omega}). In order to play a game of Omega you have to type in bash 'julia main.jl $<$boardsize$>$ $<$players$>$'. Boardsize is the dimension of the Omega board, e.g. 5 or 7. Players is a composite of two letters, h (Human), a (AI), r (random) or d (dumber AI), e.g. 'ah' would be AI as white playing against a human player as black. The sequence the players are entered also defines who is white and who is black. A complete call would be for example 'julia main.jl 5 ah'. Note that you will be asked for the parameters if you did not enter any, i.e. you just entered 'julia main.jl'.
+
+When playing the game the current player is displayed, when the current player is a human he is asked for the position to put a stone. The position is a 2-tuple, consisting of the row and the column. After entering the first position the is asked for the next stone coordinates. If a mistake was done in either of these, he will be asked again. At the end of his turn he is able to undo the entered moves and can restart his turn.
+
+Furthermore, it is possible to vary the amount of time the AI has to search. This is done by changing the variable $totalTurnTime$ in main.jl. By default, the total time the AI gets is at 15 minutes, resulting in about 87 seconds per turn. In order to have a more timely game time I recommend 2-4 minutes. This reduces the time per turn to about 14 seconds.
 
 \section{Details of implementation}
 I chose to implement Omega on the command-line because Julia has no native graphical user interface library and it seemed to me a bit too much work to learn to program a GUI in Julia using another library additionally to learning Julia in the first place. Using unicode symbols still makes the graphical board representation appealing and useful.
@@ -28,6 +38,7 @@ The grid has a hashing function for the later use of a transpositiontable. The h
 The hexgrid, additionally to having the current boardstate stored, has two lists of groups and groupsizes stored. This enables a fast calculation of the current score. When putting a player stone on the board a new hashcode is calculated and also a union-find algorithm \cite{galler1964improved} with path-splitting is used to update potential new groups. There is a difference to this when a stone of a player is removed (a field is freed up): additionally to storing the current board state, groups and group-sizes I also store the past groups and group-sizes. This makes it easy to revert to a previous state where the latest player stone was not set. This is done because a de-unification and thus updating all the groups is inefficient and requires more overhead.
 
 When calculating the scores it is only required to multiply all values of the player's group-sizes together and not a scan of the whole board is needed.
+
 
 \section{Implementation of AI}
 The AI is implemented using a negamax search with iterative deepening and using a transposition table. To reduce the branching factor negamax is looking at a single move at each search depth and not a whole turn, which consists of two moves. This reduces the branching factor significantly: On a 6-by-6 boardgame it reduces the branching factor from 8190 to only 91 on the first move. Furthermore, with this division into two separate moves it allows negamax to prune even more resulting in less subtrees that are searched.
@@ -66,9 +77,13 @@ For efficiently calculating scores and evaluating the heuristic I use a union-fi
 A problem I had was that the scores were not calculated correctly when the AI-player was searching. Even trying reproducing the exact same moves by hand did not reproduce the same bug. After 10 mind-boggling hours I found out that I needed to create a deepcopy of the latest entry to not have side-effects later on.
 
 \section{Experiments}
-In this section I will compare the different enhancements and how much of a difference they make. The time for the AI was 10 minutes across all experiments on a board size 7.
-In order to see which enhancement was the most effective I let different versions of the AI play against itself.
-Surprisingly, it seemed that the one who started first won in about 96\% of the games.
+In this section I will compare the different enhancements and how much of a difference they make. The time for the AI was 15 minutes across all experiments on a board size 5. For this I let the fully enhanced AI play two games against the lesser enhanced AI. Once as white and another time as black.
+In order to see which enhancement was the most effective I let different versions of the AI play against itself. After every run I added another enhancement. Since there is (almost) no randomization (the killermoves get randomly exchanged) we can consider all results deterministic and thus do not need multiple runs.
+
+The first comparison was against an AI that just uses a transposition table. The fully enhanced AI won both games and was able to search at almost every stage of the game 2-ply deeper than the transposition table-AI.
+Next, I compared against an AI with transposition table and a null-move heuristic. Here the fully enhanced AI won again both games. The difference in search depth here was about 1-ply in favour of the fully enhanced AI.
+For the next comparison I added a multi-cut heuristic. After two games the AI was able to win both of them. Although in the mid-game the search-depth was similar, in later stages of the game the fully enhanced AI was able to search two and sometimes even three ply deeper than the less enhanced AI. This may be a reason for it to win both of the games.
+Lastly, adding killer-moves results in both AI being equally potent, thus resulting in a draw, i.e. each should win once.
 
 \bibliography{omegabib}
 \bibliographystyle{abbrv}

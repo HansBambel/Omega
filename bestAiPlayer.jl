@@ -95,7 +95,6 @@ function BestAI()
         transpositionTable = Dict{Int64, Tuple{Float64, Int, Int, Array}}()
         # for every depth I save two killermoves (moves that produced a cut off)
         killerMoves = Array{Array{Array{Int, 1}, 1}, 1}()
-        # println("Time left: ", timeLeft)
         let
         maxDepth = 1
         timeElapsed = 0.0
@@ -117,10 +116,8 @@ function BestAI()
         end
         end
 
-        # println("KillerMoves: ", killerMoves)
         # look up state in hashmap and return the best turn from it
         if haskey(transpositionTable, grid.getHash())
-            # println("Got firstMove")
             _, _, _, firstMove = transpositionTable[grid.getHash()]
         else
             println("No firstMove in transpositionTable --> basic opening")
@@ -129,13 +126,11 @@ function BestAI()
         # execute it and get next one move to finish a turn
         grid.setGridValue!(firstMove[1], firstMove[2], 2)
         if haskey(transpositionTable, grid.getHash())
-            # println("Got secondMove")
             _, _, _, secondMove = transpositionTable[grid.getHash()]
         else
             println("No secondMove in transpositionTable --> basic opening")
             _, _, _, secondMove = get(transpositionTable, grid.getHash(), (0.0, 0, 0, posMoves[2]))
         end
-        # println("Best Move: ", [firstMove, secondMove])
 
         return [firstMove, secondMove]
     end
@@ -187,10 +182,19 @@ function BestAI()
         # not yet gameOver, but max search depth
         elseif depth <= 0
             # "AN ADMISSABLE HEURISTIC NEVER OVERESTIMATES!" - Helmar Gust
-            score = grid.calculateScores()
-            heuristicScore = grid.heuristic()
+            maxTurns = grid.getMaxNumMoves() ÷ 2
+            turnsLeft = grid.getNumPosMoves() ÷ 2
+            turnsDone = maxTurns - turnsLeft + 1
+            # if still "early game" only use heuristic
+            if turnsDone < 13
+                approximation = grid.heuristic()
+            # else use combination of heuristic and scores
             # the less moves are available (lategame) the more the current score counts
-            approximation = score/grid.getNumPosMoves() + heuristicScore*(1.0-1.0/grid.getNumPosMoves())
+            else
+                score = grid.calculateScores()
+                heuristicScore = grid.heuristic()
+                approximation = score/grid.getNumPosMoves() + heuristicScore*(1.0-1.0/grid.getNumPosMoves())
+            end
             return approximation[player] - approximation[otherPlayer], false
 
         # continue searching

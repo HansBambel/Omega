@@ -25,12 +25,12 @@ function simpleAlphaBetaAI()
         gridOffset::Int = grid.getOffset()
         otherPlayer::Int = player == 1 ? 2 : 1
         # best opening move
-        # if false
         if currentTurn == 1
             bestTurn[player] = [2*gridOffset+1, gridOffset+1]
             bestTurn[otherPlayer] = [gridOffset+1, gridOffset+1]
             grid.setGridValue!(bestTurn[player][1], bestTurn[player][2], player+1)
             grid.setGridValue!(bestTurn[otherPlayer][1], bestTurn[otherPlayer][2], otherPlayer+1)
+        # if a corner is still free --> put a stone there
         elseif (([2*gridOffset+1, gridOffset+1] in posMoves)|
                 ([2*gridOffset+1, 1] in posMoves)|
                 ([gridOffset+1, 2*gridOffset+1] in posMoves)|
@@ -187,12 +187,20 @@ function simpleAlphaBetaAI()
         # not yet gameOver, but max search depth
         elseif depth <= 0
             # "AN ADMISSABLE HEURISTIC NEVER OVERESTIMATES!" - Helmar Gust
-            score = grid.calculateScores()
-            heuristicScore = grid.heuristic()
-            # the less moves are available (lategame) the more the current score counts
-            approximation = score/grid.getNumPosMoves() + heuristicScore*(1.0-1.0/grid.getNumPosMoves())
-            return approximation[player] - approximation[otherPlayer], false
-
+            maxTurns = grid.getMaxNumMoves() ÷ 2
+            turnsLeft = grid.getNumPosMoves() ÷ 2
+            turnsDone = maxTurns - turnsLeft + 1
+            # if still "early game" only use heuristic
+            if turnsDone < 13
+                approximation = grid.heuristic()
+                return approximation[player] - approximation[otherPlayer], false
+            else
+                score = grid.calculateScores()
+                heuristicScore = grid.heuristic()
+                # the less moves are available (lategame) the more the current score counts
+                approximation = score/grid.getNumPosMoves() + heuristicScore*(1.0-1.0/grid.getNumPosMoves())
+                return approximation[player] - approximation[otherPlayer], false
+            end
         # continue searching
         else
             startTime = time_ns()
@@ -217,20 +225,20 @@ function simpleAlphaBetaAI()
             # this eliminates all duplicates
             move_ordering = unique(move_ordering)
 
-            ### Do Null move here ###
             R = 2
             newValue = -Inf
-            if doNull #& (depth%2 == 0)
-                # println("Apply null move!")
-                grid.changePlayer()
-                newValue, timeOut = alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1-R, false, move_ordering, killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, false)
-                newValue = -newValue
-                grid.changePlayer()
-            end
-            if newValue >= beta
-                # println("Pruning!!")
-                return beta, timeOut
-            end
+            ### Do Null move here ###
+            # if doNull #& (depth%2 == 0)
+            #     # println("Apply null move!")
+            #     grid.changePlayer()
+            #     newValue, timeOut = alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1-R, false, move_ordering, killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, false)
+            #     newValue = -newValue
+            #     grid.changePlayer()
+            # end
+            # if newValue >= beta
+            #     # println("Pruning!!")
+            #     return beta, timeOut
+            # end
 
             # ### Do multi-cut now ###
             if depth >= 4

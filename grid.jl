@@ -23,6 +23,7 @@ function Grid()
     groupSize = Array{Int}
     offset::Int = 0
     numPossibleMoves::Int = 0
+    maxNumberMoves::Int = 0
     currentHash::Int64 = 1337
     playerSwap::Int64 = 1
     hashArray = Array
@@ -56,6 +57,7 @@ function Grid()
                 end
             end
         end
+        maxNumberMoves = numPossibleMoves
         currentHash = rand(Int64)
         playerSwap = rand(Int64)
         groups = [collect(1:numPossibleMoves), collect(1:numPossibleMoves)]
@@ -142,7 +144,7 @@ function Grid()
     end
 
     function findRoot(x::Int, player::Int)::Int
-        # path splitting:
+        # union find with path splitting:
         while groups[player][x] != x
             x, groups[player][x] = groups[player][x], groups[player][groups[player][x]]
         end
@@ -161,6 +163,10 @@ function Grid()
         return numPossibleMoves
     end
 
+    function getMaxNumMoves()::Int
+        return maxNumberMoves
+    end
+
     function printArray()
         for row = 1:size(grid)[1]
             println(grid[row,:])
@@ -168,7 +174,6 @@ function Grid()
     end
 
     function printBoard()
-        # PLAYERCOLORS = ["W", "B", "R", "G"]
         for row = 1:size(grid)[1]
             @printf("%2.0f : ", row)
             # indentation needed for lower half of grid
@@ -182,7 +187,6 @@ function Grid()
                 elseif val>=2 && val <=5
                     print(" ", PLAYERCOLORS[val-1], indent)
                 else
-                    # Free field (used to be val)
                     print(" ", "\U2B22", indent)
                 end
             end
@@ -231,7 +235,7 @@ function Grid()
     end
 
     function calculateScores()::Array{Float64}
-        # println("Is node 12 in the same set as 3? ", find(12, 1) == find(3, 1))
+        # multiplies the groupSizes (aka the size that is in each root) of each player together
         scoreP1 = prod([groupSize[1][g] for g in Set(groups[1])])
         scoreP2 = prod([groupSize[2][g] for g in Set(groups[2])])
         return [scoreP1, scoreP2]
@@ -309,6 +313,7 @@ function Grid()
     # these functions will be exported
     () -> (getArray;
            getNumPosMoves;
+           getMaxNumMoves;
            initializeGrid;
            getGridValue;
            setGridValue!;
@@ -328,96 +333,3 @@ function Grid()
            groupSize;
            history)
 end
-
-# const global PLAYERCOLORS = ["\U2715", "\U25B3", "\U26C4", "\U2661"]
-# myGrid = Grid()
-# myGrid.initializeGrid(5)
-# # myGrid.setGridValue!(2,2,2)
-# # myGrid.setGridValue!(1,2,3)
-# # myGrid.setGridValue!(1,1,2)
-# # myGrid.setGridValue!(1,3,3)
-# # println(myGrid.heuristic())
-# # myGrid.setGridValue!(2,1,2)
-# # println(myGrid.heuristic())
-# # # myGrid.printBoard()
-# # # println(myGrid.calculateScores())
-# # # # do alot of set and back
-# myGrid.setGridValue!(4, 1, 2)
-# myGrid.setGridValue!(5, 1, 2)
-# myGrid.setGridValue!(6, 1, 2)
-# myGrid.setGridValue!(3, 2, 2)
-# myGrid.setGridValue!(9, 4, 2)
-# myGrid.setGridValue!(9, 5, 2)
-# myGrid.setGridValue!(4, 4, 3)
-# myGrid.setGridValue!(5, 4, 3)
-# myGrid.setGridValue!(6, 4, 3)
-# myGrid.setGridValue!(3, 4, 3)
-# myGrid.setGridValue!(1, 4, 3)
-# myGrid.setGridValue!(4, 7, 3)
-# myGrid.setGridValue!(5, 7, 3)
-# myGrid.setGridValue!(9, 4, 3)
-# myGrid.printBoard()
-# println(myGrid.calculateScores())
-# @time myGrid.calculateScores()
-# @code_warntype myGrid.calculateScores()
-# @time myGrid.heuristic()
-# @time myGrid.calculateScores(2)
-# @time myGrid.calculateScores(2)
-# @time myGrid.setGridValue!(5, 3, 3)
-# # myGrid.setGridValue!(3, 4, 3)
-# # myGrid.setGridValue!(3, 4, 3)
-# # println(myGrid.getFreeFieldsAroundGroup([4, 1], []))
-# println(myGrid.heuristic())
-# @time myGrid.calculateScores(2)
-# @time myGrid.setGridValue!(1, 1, 1)
-# @time myGrid.setGridValue!(2, 2, 1)
-# myGrid.setGridValue!(3, 1, 1)
-# myGrid.setGridValue!(3, 2, 1)
-# myGrid.setGridValue!(4, 4, 1)
-# myGrid.setGridValue!(2, 4, 1)
-# myGrid.setGridValue!(3, 4, 1)
-# myGrid.setGridValue!(3, 4, 1)
-#
-# myGrid.setGridValue!(1,4,2)
-# myGrid.setGridValue!(1,3,3)
-# myGrid.printBoard()
-# println(myGrid.calculateScores(2))
-# myGrid.setGridValue!(2, 2, 2)
-# myGrid.setGridValue!(1, 2, 3)
-# println(myGrid.calculateScores(2))
-#
-# myGrid.setGridValue!(7, 3, 2)
-# myGrid.setGridValue!(4, 7, 3)
-# println(myGrid.calculateScores(2))
-#
-# myGrid.setGridValue!(4, 3, 2)
-# myGrid.setGridValue!(3, 1, 3)
-# println(myGrid.calculateScores(2))
-#
-# myGrid.setGridValue!(6, 4, 2)
-# myGrid.setGridValue!(4, 5, 3)
-# println(myGrid.calculateScores(2))
-#
-# myGrid.setGridValue!(2, 5, 2)
-# myGrid.setGridValue!(6, 3, 3)
-# println(myGrid.calculateScores(2))
-#
-# myGrid.setGridValue!(1, 1, 2)
-# myGrid.setGridValue!(7, 2, 3)
-# println(myGrid.calculateScores(2))
-#
-# myGrid.setGridValue!(7, 1, 2)
-# myGrid.setGridValue!(4, 4, 3)
-# println(myGrid.calculateScores(2))
-#
-# myGrid.setGridValue!(3, 2, 2)
-# myGrid.setGridValue!(5, 1, 3)
-# println(myGrid.calculateScores(2))
-# println(myGrid.groupSize)
-#
-# myGrid.setGridValue!(2, 1, 2)
-# myGrid.setGridValue!(5, 3, 3)
-# println(myGrid.calculateScores(2))
-# println(myGrid.groupSize)
-# myGrid.printBoard()
-# println()

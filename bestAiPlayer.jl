@@ -76,7 +76,7 @@ function BestAI()
             println("Time for Turn ", currentTurn, ": ", timeForThisTurn)
             bestTurn = iterativeDeepening(grid, player, posMoves, timeForThisTurn)
             # get the best move and play it
-            # first move is already done by iterative deepening
+            grid.setGridValue!(bestTurn[1][1], bestTurn[1][2], 2)
             grid.setGridValue!(bestTurn[2][1], bestTurn[2][2], 3)
         end
 
@@ -116,14 +116,14 @@ function BestAI()
         end
         end
 
-        # look up state in hashmap and return the best turn from it
+        # look up state in hashmap and return the best move from it
         if haskey(transpositionTable, grid.getHash())
             _, _, _, firstMove = transpositionTable[grid.getHash()]
         else
             println("No firstMove in transpositionTable --> basic opening")
             _, _, _, firstMove = get(transpositionTable, grid.getHash(), (0.0, 0, 0, posMoves[1]))
         end
-        # execute it and get next one move to finish a turn
+        # execute it and get next move to finish a turn
         grid.setGridValue!(firstMove[1], firstMove[2], 2)
         if haskey(transpositionTable, grid.getHash())
             _, _, _, secondMove = transpositionTable[grid.getHash()]
@@ -131,6 +131,8 @@ function BestAI()
             println("No secondMove in transpositionTable --> basic opening")
             _, _, _, secondMove = get(transpositionTable, grid.getHash(), (0.0, 0, 0, posMoves[2]))
         end
+        # undo first move (this is for having nicer code separation)
+        grid.setGridValue!(firstMove[1], firstMove[2], 1)
 
         return [firstMove, secondMove]
     end

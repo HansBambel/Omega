@@ -56,7 +56,7 @@ function simpleAlphaBetaAI()
             elseif [1, 1] in posMoves
                 bestTurn[player] = [1, 1]
             end
-            # group the other players stone in the middle
+            # group the other player's stones in the middle
             bestTurn[otherPlayer] = posMoves[(length(posMoves)+1) ÷ 2]
             grid.setGridValue!(bestTurn[player][1], bestTurn[player][2], player+1)
             grid.setGridValue!(bestTurn[otherPlayer][1], bestTurn[otherPlayer][2], otherPlayer+1)
@@ -76,7 +76,7 @@ function simpleAlphaBetaAI()
             println("Time for Turn ", currentTurn, ": ", timeForThisTurn)
             bestTurn = iterativeDeepening(grid, player, posMoves, timeForThisTurn)
             # get the best move and play it
-            # first move is already done by iterative deepening
+            grid.setGridValue!(bestTurn[1][1], bestTurn[1][2], 2)
             grid.setGridValue!(bestTurn[2][1], bestTurn[2][2], 3)
         end
 
@@ -95,7 +95,6 @@ function simpleAlphaBetaAI()
         transpositionTable = Dict{Int64, Tuple{Float64, Int, Int, Array}}()
         # for every depth I save two killermoves (moves that produced a cut off)
         killerMoves = Array{Array{Array{Int, 1}, 1}, 1}()
-        # println("Time left: ", timeLeft)
         let
         maxDepth = 1
         timeElapsed = 0.0
@@ -117,25 +116,23 @@ function simpleAlphaBetaAI()
         end
         end
 
-        # println("KillerMoves: ", killerMoves)
-        # look up state in hashmap and return the best turn from it
+        # look up state in hashmap and return the best move from it
         if haskey(transpositionTable, grid.getHash())
-            # println("Got firstMove")
             _, _, _, firstMove = transpositionTable[grid.getHash()]
         else
             println("No firstMove in transpositionTable --> basic opening")
             _, _, _, firstMove = get(transpositionTable, grid.getHash(), (0.0, 0, 0, posMoves[1]))
         end
-        # execute it and get next one move to finish a turn
+        # execute it and get next move to finish a turn
         grid.setGridValue!(firstMove[1], firstMove[2], 2)
         if haskey(transpositionTable, grid.getHash())
-            # println("Got secondMove")
             _, _, _, secondMove = transpositionTable[grid.getHash()]
         else
             println("No secondMove in transpositionTable --> basic opening")
             _, _, _, secondMove = get(transpositionTable, grid.getHash(), (0.0, 0, 0, posMoves[2]))
         end
-        # println("Best Move: ", [firstMove, secondMove])
+        # undo first move (this is for having nicer code separation)
+        grid.setGridValue!(firstMove[1], firstMove[2], 1)
 
         return [firstMove, secondMove]
     end
@@ -193,14 +190,15 @@ function simpleAlphaBetaAI()
             # if still "early game" only use heuristic
             if turnsDone < 13
                 approximation = grid.heuristic()
-                return approximation[player] - approximation[otherPlayer], false
+            # else use combination of heuristic and scores
+            # the less moves are available (lategame) the more the current score counts
             else
                 score = grid.calculateScores()
                 heuristicScore = grid.heuristic()
-                # the less moves are available (lategame) the more the current score counts
                 approximation = score/grid.getNumPosMoves() + heuristicScore*(1.0-1.0/grid.getNumPosMoves())
-                return approximation[player] - approximation[otherPlayer], false
             end
+            return approximation[player] - approximation[otherPlayer], false
+
         # continue searching
         else
             startTime = time_ns()
@@ -213,6 +211,7 @@ function simpleAlphaBetaAI()
                     push!(move_ordering, killerMoves[end-(depth-1)][1])
                 end
             elseif length(killerMoves[end-(depth-1)]) == 2
+                # check whether the stored killer move is currently possible
                 if killerMoves[end-(depth-1)][1] in posMoves
                     push!(move_ordering, killerMoves[end-(depth-1)][1])
                 end
@@ -225,22 +224,22 @@ function simpleAlphaBetaAI()
             # this eliminates all duplicates
             move_ordering = unique(move_ordering)
 
+            ### Do Null move here ###
             R = 2
             newValue = -Inf
-            ### Do Null move here ###
-            # if doNull #& (depth%2 == 0)
-            #     # println("Apply null move!")
-            #     grid.changePlayer()
-            #     newValue, timeOut = alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1-R, false, move_ordering, killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, false)
-            #     newValue = -newValue
-            #     grid.changePlayer()
-            # end
-            # if newValue >= beta
-            #     # println("Pruning!!")
-            #     return beta, timeOut
-            # end
+            if doNull #& (depth%2 == 0)
+                # println("Apply null move!")
+                grid.changePlayer()
+                newValue, timeOut = alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1-R, false, move_ordering, killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, false)
+                newValue = -newValue
+                grid.changePlayer()
+            end
+            if newValue >= beta
+                # println("Pruning!!")
+                return beta, timeOut
+            end
 
-            # ### Do multi-cut now ###
+            ### Do multi-cut now ###
             if depth >= 4
                 C = 3
                 M = 10
@@ -251,7 +250,6 @@ function simpleAlphaBetaAI()
                         break
                     end
                     global movesInvestigated += 1
-                    # check every 1000 moves
                     if movesInvestigated%1000 == 0
                         # if no time left
                         if timeLeft <= (time_ns()-startTime)/1.0e9
@@ -263,7 +261,7 @@ function simpleAlphaBetaAI()
                     if firstStoneSet
                         grid.setGridValue!(move[1], move[2], 3)
                         grid.changePlayer()
-                        newValue, timeOut = alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1-R,  true, move_ordering[1:end .!= index], killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, false)
+                        newValue, timeOut = alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1-R, true, move_ordering[1:end .!= index], killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, false)
                         newValue = -newValue
                         grid.changePlayer()
                     # same player's turn, but other stone (note that doNull is false)

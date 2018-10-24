@@ -225,64 +225,64 @@ function simpleAlphaBetaAI()
             move_ordering = unique(move_ordering)
 
             ### Do Null move here ###
-            R = 2
-            newValue = -Inf
-            if doNull #& (depth%2 == 0)
-                # println("Apply null move!")
-                grid.changePlayer()
-                newValue, timeOut = alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1-R, false, move_ordering, killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, false)
-                newValue = -newValue
-                grid.changePlayer()
-            end
-            if newValue >= beta
-                # println("Pruning!!")
-                return beta, timeOut
-            end
-
-            ### Do multi-cut now ###
-            if depth >= 4
-                C = 3
-                M = 10
-                let
-                c = 0
-                for (index, move) in enumerate(move_ordering)
-                    if index >= M
-                        break
-                    end
-                    global movesInvestigated += 1
-                    if movesInvestigated%1000 == 0
-                        # if no time left
-                        if timeLeft <= (time_ns()-startTime)/1.0e9
-                            # println("Not time left --> no write in transpositionTable at this depth")
-                            return value, true
-                        end
-                    end
-                    # do a move and check for the next M searches with lower search depth whether at least C prunings occur
-                    if firstStoneSet
-                        grid.setGridValue!(move[1], move[2], 3)
-                        grid.changePlayer()
-                        newValue, timeOut = alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1-R, true, move_ordering[1:end .!= index], killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, false)
-                        newValue = -newValue
-                        grid.changePlayer()
-                    # same player's turn, but other stone (note that doNull is false)
-                    else
-                        grid.setGridValue!(move[1], move[2], 2)
-                        newValue, timeOut = alphaBetaSearch(grid, transpositionTable, player, alpha, beta, depth-1-R, false, move_ordering[1:end .!= index], killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, true)
-                    end
-                    if newValue >= beta
-                        c += 1
-                        if c >= C
-                            # undo move
-                            grid.setGridValue!(move[1], move[2], 1)
-                            # println("multi cut pruning!")
-                            return beta, timeOut
-                        end
-                    end
-                    # undo the move
-                    grid.setGridValue!(move[1], move[2], 1)
-                end
-                end
-            end
+            # R = 2
+            # newValue = -Inf
+            # if doNull #& (depth%2 == 0)
+            #     # println("Apply null move!")
+            #     grid.changePlayer()
+            #     newValue, timeOut = alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1-R, false, move_ordering, killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, false)
+            #     newValue = -newValue
+            #     grid.changePlayer()
+            # end
+            # if newValue >= beta
+            #     # println("Pruning!!")
+            #     return beta, timeOut
+            # end
+            #
+            # ### Do multi-cut now ###
+            # if depth >= 4
+            #     C = 3
+            #     M = 10
+            #     let
+            #     c = 0
+            #     for (index, move) in enumerate(move_ordering)
+            #         if index >= M
+            #             break
+            #         end
+            #         global movesInvestigated += 1
+            #         if movesInvestigated%1000 == 0
+            #             # if no time left
+            #             if timeLeft <= (time_ns()-startTime)/1.0e9
+            #                 # println("Not time left --> no write in transpositionTable at this depth")
+            #                 return value, true
+            #             end
+            #         end
+            #         # do a move and check for the next M searches with lower search depth whether at least C prunings occur
+            #         if firstStoneSet
+            #             grid.setGridValue!(move[1], move[2], 3)
+            #             grid.changePlayer()
+            #             newValue, timeOut = alphaBetaSearch(grid, transpositionTable, otherPlayer, -beta, -alpha, depth-1-R, true, move_ordering[1:end .!= index], killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, false)
+            #             newValue = -newValue
+            #             grid.changePlayer()
+            #         # same player's turn, but other stone (note that doNull is false)
+            #         else
+            #             grid.setGridValue!(move[1], move[2], 2)
+            #             newValue, timeOut = alphaBetaSearch(grid, transpositionTable, player, alpha, beta, depth-1-R, false, move_ordering[1:end .!= index], killerMoves, timeLeft-(time_ns()-startTime)/1.0e9, true)
+            #         end
+            #         if newValue >= beta
+            #             c += 1
+            #             if c >= C
+            #                 # undo move
+            #                 grid.setGridValue!(move[1], move[2], 1)
+            #                 # println("multi cut pruning!")
+            #                 return beta, timeOut
+            #             end
+            #         end
+            #         # undo the move
+            #         grid.setGridValue!(move[1], move[2], 1)
+            #     end
+            #     end
+            # end
 
             ### regular alpha-beta search ###
             # for all possible turns: execute them all

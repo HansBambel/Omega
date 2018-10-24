@@ -64,7 +64,7 @@ In my implementation the AI will put a stone of its own in the corner when it is
 Using a null-move should improve the search depth even further. It assumes that when passing your turn, you are still in a good spot later on, you can do even better when actually making a move. Since the search depth when doing a null-move is more shallow, it requires less time to return a value. A null-move should not follow a previous null-move, otherwise people would just skip all the time. In order to avoid this the null-move flag is disabled after executing a null-move. Since a null-move should not occur after setting only one stone of a player, it is only enabled after a whole turn was done.
 
 \subsection{Multi-cut}
-Another enhancement which the AI uses is multi-cut. Multi-cut assumes that when there are a certain amount of prunings already at the beginning of a (shallower) search then there will be even more later on. This is a form of forward pruning and may be more aggressive resulting in incorrect or bad prunings. The AI prunes where there are at least three children out of ten where a cut-off occurred. 
+Another enhancement which the AI uses is multi-cut. Multi-cut assumes that when there are a certain amount of prunings already at the beginning of a (shallower) search then there will be even more later on. This is a form of forward pruning and may be more aggressive resulting in incorrect or bad prunings. The AI prunes where there are at least three children out of ten where a cut-off occurred.
 
 \subsection{Time management}
 What the AI does for time management is the following: it gets the remaining time and calculates how much time it maximally is allowed to use when every turn receives the same amount of search time. Disregarded are the last three turns, which require in total less than 15 seconds to find a terminal state. The AI then uses the calculated time window to do a search. When searching only every 1000 searches the amount of time left is checked, resulting in small deviations from the allocated time for the search and the actual time it needed. At the end of such a search the actual elapsed time of the search is subtracted from the remaining time resulting in new search windows for the next search.
@@ -95,7 +95,7 @@ In the following table I noted how many wins the fully enhanced AI achieved vers
 	%\hline
 	Only TT & NM & KM & NM+MC & MC+KM & NM+KM & NM+MC+KM \\
 	\hline
-	100\% & 100\% &  & 100\% & 50\% & 50\% & 50\%
+	100\% & 100\% & 50\% & 100\% & 50\% & 50\% & 50\%
 
 \end{tabular}
 
@@ -103,4 +103,3 @@ In the following table I noted how many wins the fully enhanced AI achieved vers
 \bibliographystyle{abbrv}
 
 \end{document}
-

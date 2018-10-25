@@ -16,23 +16,32 @@
 Omega is a game played by two to four players where the goal is to achieve the most points by the end of the game. The game is played on a hexagonal grid of varying size (and even shape). Points are calculated by multiplying the players groups of stones together. A stone belongs to a group of the same color when it is next to a stone of the same color. A turn of a player consists of playing a stone of his own color and of every other player. After every player has played a turn the board is checked whether another whole round can be played. This is done by counting the empty tiles on the board; they need to be at least the number of players squared, e.g.: two players need at least four free spaces and 3 players need at least 9 free spaces. If that is not the case the game ends and the scores will be calculated. The player with the highest score wins.
 
 \section{Choice of programming language}
-I chose the programming language Julia. Since Mark told us that Python is quite slow, the programming language I'm most comfortable with fell through and I had to choose another one. Julia is quite new (version 1.0 came out on 8th of August 2018) \cite{julia1} and has a similar syntax like Python but was created for high performance computations. With Julia it is possible to have C-like speeds \cite{benchmarks}. Although this is mainly useful for data analysis and machine learning I wanted to try it out for this project. Furthermore, it is possible to import Python and C packages which can be useful if there is no native Julia package released yet.
+I chose the programming language Julia. Since Mark Winands told us that Python is ``quite slow", the programming language I'm most comfortable with fell through and I had to choose another one. Julia is quite new (version 1.0 came out on 8th of August 2018) \cite{julia1} and has a similar syntax like Python but was created for high performance computations. With Julia it is possible to have C-like speeds \cite{benchmarks}. Although this is mainly useful for data analysis and machine learning I wanted to try it out for this project. Furthermore, it is possible to import Python and C packages which can be useful if there is no native Julia package released yet.
 
 \section{Usage of the program}
 In order to use my implementation Julia needs to be installed. To do this go to \url{https://julialang.org/downloads/} and download it. For easier use you can add Julia to your Path variable. Since my implementation uses packages that are not installed natively you need to run Julia and open the so called REPL (Read-eval-print-loop) and install them. Type 'using Pkg' (this is the package installer of Julia) followed by the following statements: 'Pkg.add("Printf")', 'Pkg.add("IterTools")' and finally 'Pkg.add("DataStructures")'.
 
 With Julia correctly set up you can go to the folder of my implementation (you can get it here: \url{https://github.com/HansBambel/Omega}). In order to play a game of Omega you have to type in bash 'julia main.jl'. You will be prompted to type in parameters for the kind of game you want to play, such as board size and amount of players (currently only two players are supported for AI). It is also possible to start the program without the need to enter the parameters every time by using keyword arguments: 'julia main.jl $<$boardsize$>$ $<$players$>$'. Boardsize is the dimension of the Omega board, e.g. 5 or 7. Players is a composite of two letters, h (Human), a (AI), r (random) or d (dumber AI), e.g. 'ah' would be AI as white playing against a human player as black. The sequence the players are entered also defines who is white and who is black. A complete call would be for example 'julia main.jl 5 ah'.
 
-When playing the game the current player is displayed, when the current player is a human he is asked for the position to put a stone. The position is a 2-tuple, consisting of the row and the column. After entering the first position the player is asked for the next stone coordinates. If a mistake was done in either of these, he will be asked again. At the end of his turn he is able to undo the entered moves (if he wants to correct himself) and can restart his turn.
+When playing the game the current player is displayed, when the current player is a human he is asked for the position to put a stone. The position is a 2-tuple, consisting of the row and the column. After entering the first position the player is asked for the next stone coordinates. If a mistake was done in either of these, he will be asked again. At the end of his turn he is able to undo the entered moves (if he wants to correct himself) and can restart his turn (see Figure \ref{humanTurn}).
+
+\begin{figure}
+\includegraphics[scale=0.6]{"Human turn"}
+\caption{An example of a human turn}
+\label{humanTurn}
+\end{figure}
+
 
 Furthermore, it is possible to vary the amount of time the AI has to search. This is done by changing the variable $totalTurnTime$ in main.jl. By default, the total time the AI gets is at 15 minutes, resulting in about 87 seconds per turn. In order to have a more timely game time I recommend 2-4 minutes. This reduces the time per turn to about 14 seconds.
 
-When it is the human player's turn he is prompted to give a position for the next stone. The position consists of the row and the column. This position needs to be free, i.e. not occupied by a stone.
-
 \section{Details of implementation}
-I chose to implement Omega on the command-line because Julia has no native graphical user interface library and it seemed to me a bit too much work to learn to program a GUI in Julia using another library additionally to learning Julia in the first place. Using unicode symbols still makes the graphical board representation appealing and useful.
+I chose to implement Omega on the command-line because Julia has no native graphical user interface library and it seemed to me a bit too much work to learn to program a GUI in Julia using another library additionally to learning Julia in the first place. Using unicode symbols still makes the graphical board representation appealing and useful (see Figure \ref{interface}).
 
+\begin{figure}
 \includegraphics[scale=0.5]{"Sample interface"}
+\caption{Interface}
+\label{interface}
+\end{figure}
 
 
 The grid has a hashing function for the later use of a transpositiontable. The hashing is done using zobrist hashing \cite{zobrist1970new} to be computationally efficient. A random 64-bit Integer is created when the grid is initialized to represent the empty board. Then, for every hexfield three 64-bit Integer values are generated representing that this field can be either free or have a white or a black stone on it. When a stone is set on the grid, the corresponding Integer of the previous occupying stone is removed from the old hashvalue using the XOR operation. Then, the new stone is inserted to the hashcode using the XOR operation with the corresponding Integer of the new stone.
@@ -64,21 +73,23 @@ In my implementation the AI will put a stone of its own in the corner when it is
 Using a null-move should improve the search depth even further. It assumes that when passing your turn, you are still in a good spot later on, you can do even better when actually making a move. Since the search depth when doing a null-move is more shallow, it requires less time to return a value. A null-move should not follow a previous null-move, otherwise people would just skip all the time. In order to avoid this the null-move flag is disabled after executing a null-move. Since a null-move should not occur after setting only one stone of a player, it is only enabled after a whole turn was done.
 
 \subsection{Multi-cut}
-Another enhancement which the AI uses is multi-cut. Multi-cut assumes that when there are a certain amount of prunings already at the beginning of a (shallower) search then there will be even more later on. This is a form of forward pruning and may be more aggressive resulting in incorrect or bad prunings. The AI prunes where there are at least three children out of ten where a cut-off occurred.
+Another enhancement which the AI uses is multi-cut. Multi-cut assumes that when there are a certain amount of prunings already at the beginning of a (shallower) search then there will be even more later on. This is a form of forward pruning and may be more aggressive resulting in incorrect or bad prunings. The AI prunes where there are at least three children out of ten where a cut-off occurred. 
 
 \subsection{Time management}
-What the AI does for time management is the following: it gets the remaining time and calculates how much time it maximally is allowed to use when every turn receives the same amount of search time. Disregarded are the last three turns, which require in total less than 15 seconds to find a terminal state. The AI then uses the calculated time window to do a search. When searching only every 1000 searches the amount of time left is checked, resulting in small deviations from the allocated time for the search and the actual time it needed. At the end of such a search the actual elapsed time of the search is subtracted from the remaining time resulting in new search windows for the next search.
+What the AI does for time management is the following: it gets the remaining time and calculates how much time it maximally is allowed to use when every turn receives the same amount of search time. Disregarded are the last three turns, which require in total less than 15 seconds to find a terminal state. The AI then uses the calculated time window to do a search. When searching, only every 1000 searches the amount of time left is checked, resulting in small deviations from the allocated time for the search and the actual time it needed. At the end of such a search the actual elapsed time of the search is subtracted from the remaining time resulting in new search windows for the next search.
 
 \section{Problems}
 \subsection{Heuristic}
-Finding a good heuristic was a key problem. As my old AI-teacher always said in what felt like every lecture: "An admissible heuristics never overestimates." Therefore, using the current score is not suitable because having a high score now can change quickly in the next move when multiple groups are combined to a single one. In the earlier state of the game the score is not that important, making another heuristic more useful for that part of the game. Due to the fact that my heuristic does not take into account bigger groups of the players, which could occur over the mid and late-game it will become less suitable for later stages of the game. In order to compensate for that I decided to also take the current score for those phases of the game into account. The current score is multiplied with a discount factor that decreases the further the game progresses.
+Finding a good heuristic was a key problem. As my old AI-teacher always said in what felt like every lecture: ``An admissible heuristics never overestimates." Therefore, using the current score is not suitable because having a high score now can change quickly in the next move when multiple groups are combined to a single one. In the earlier state of the game the current score is not that important, making another heuristic more useful for that part of the game. Due to the fact that my heuristic does not take into account bigger groups of the players, which could occur over the mid and late-game it will become less suitable for later stages of the game. In order to compensate for that I decided to also take the current score for those phases of the game into account. The current score is multiplied with a discount factor that decreases the further the game progresses.
 
 \subsection{Side-effects}
 For efficiently calculating scores and evaluating the heuristic I use a union-find algorithm \cite{galler1964improved}. Every time a stone of a player is set on the field the union-find algorithm will unify it with its neighbouring groups if there are any. Unfortunately, separating a group is complicated / computationally inefficient and thus, I save the current groups in a stack. If a separation is necessary, I pop the last entry (where the latest unification occurred) of the stack and use the one before. This way I circumvent a delete function of the union-find algorithm.
 A problem I had was that the scores were not calculated correctly when the AI-player was searching. Even trying reproducing the exact same moves by hand did not reproduce the same bug. After 10 mind-boggling hours I found out that I needed to create a deepcopy of the latest entry to not have side-effects later on.
 
+\subsection{Usefulness of enhancements}
+I'm still not quite sure how useful (if at all) some of the enhancements are. Even after testing different combinations of enhancements (see Chapter \ref{experiments}) some of the enhancements usefulness can be questioned. What appears to be very useful is the killer-moves heuristic. Although other enhancements (null-move and multi-cut) manage to increase search-depth by one or two ply I can not say for sure how big of an advancement this gives since I do not have an appropriate opponent to test it with. In the lecture it was said that (at least in chess) searching just one ply deeper gave a huge improve in performance. That is why I am optimistic that these enhancements boost my AI's performance. In the end, the AI still loses against a human player even with all enhancements activated.
 
-\section{Experiments}
+\section{Experiments}\label{experiments}
 In this section I will compare the different enhancements and how much of a difference they make. The time for the AI was 15 minutes across all experiments on a board size 5. For this I let the fully enhanced AI play two games against the lesser enhanced AI. Once as white and another time as black.
 In order to see which enhancement was the most effective I let different versions of the AI play against itself. After every run I added another enhancement. Since there is (almost) no randomization (the killer-moves get randomly exchanged) we can consider all results deterministic and thus do not need multiple runs. All the versions have at least a transposition table and use iterative deepening.
 
@@ -87,19 +98,25 @@ Next, I compared against an AI with transposition table and a null-move heuristi
 For the next comparison I added a multi-cut heuristic. After two games the AI was able to win both of them. Although in the mid-game the search-depth was similar, in later stages of the game the fully enhanced AI was able to search two and sometimes even three ply deeper than the less enhanced AI. This may be a reason for it to win both of the games.
 Lastly, adding killer-moves resulted in both AI being equally potent, thus resulting in a draw, i.e. each won once.
 
-Combining killer-moves with multi-cut resulted in the full-AI winning only one of the games. This could mean that these two enhancements have a good effect on the tree search. To further investigate how good multi-cut is I enabled Null-moves and the Killer-moves and let it play with a fully enhanced AI. The result was that the fully enhanced did not win.
+Combining killer-moves with multi-cut resulted in the full-AI winning only one of the games. This could mean that these two enhancements have a good effect on the tree search. To further investigate how much of a benefit these enhancements give I enabled null-moves and the killer-moves and let it play with a fully enhanced AI. The result was that the fully enhanced only won one of two games. That is why I activated only the killer-moves and found out that the AI again won only one of two games. This indicates that killer-moves are a very effective method for search optimization.
 
-In the following table I noted how many wins the fully enhanced AI achieved versus variants of the lesser enhanced AI: \\
+In table \ref{resultsTable} I noted what the outcomes of the differently enhanced AIs vs the fully enhanced AI was.
+
+\begin{table}
 \begin{tabular}{c|c|c|c|c|c|c}
-	\multicolumn{7}{c}{Enhancements} \\
+	%\multicolumn{7}{c}{Fully enhanced AI vs less enhanced AI} \\
 	%\hline
 	Only TT & NM & KM & NM+MC & MC+KM & NM+KM & NM+MC+KM \\
 	\hline
-	100\% & 100\% & 50\% & 100\% & 50\% & 50\% & 50\%
-
+	Win & Win & Draw & Win & Draw & Draw & Draw
 \end{tabular}
+\caption{Results of matches of fully enhanced AI versus differently enhanced AIs.}
+\label{resultsTable}
+\end{table}
+
 
 \bibliography{omegabib}
 \bibliographystyle{abbrv}
 
 \end{document}
+

@@ -114,6 +114,10 @@ In table \ref{resultsTable} I noted what the outcomes of the differently enhance
 \label{resultsTable}
 \end{table}
 
+\section{Tournament}
+In the tournament it became clear that one of the major issues were crashing games. Since my implementation only fails if there is a hashtable lookup crash (and the chances of that happening are low) I already had an advantage over other players.
+In the first round of the tournament my opponent's game crashed three times, she was able to recover one of these, but it crashed almost immediately after. Furthermore, many used the current score as evaluation score, which made my AI play way better in the start of the game because the opponent build big groups at the start to get a big score at the start.
+Sadly, I had a bug that made me lose one game. The bug was due to the opening book that selected an illegal move. I fixed it afterwards. The next three rounds were won 2:0. In the end I lost another game against another player who had a pretty sophisticated opening book. But in the end I ended up in first place. I did not expected that.
 
 \bibliography{omegabib}
 \bibliographystyle{abbrv}

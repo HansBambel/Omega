@@ -31,7 +31,7 @@ bestAI = BestAI()
 alphaBetaAI = simpleAlphaBetaAI()
 ###### This is the time the AI is allowed to have   ############
 ###### CHANGE THIS TO GIVE ANOTHER TIME WINDOW TO THE AI #######
-totalTurnTime = 15*60.0 ########################################
+totalTurnTime = 12*60.0 ########################################
 ################################################################
 timeBestAIneeded = 0
 timeAlphaBetaAIneeded = 0

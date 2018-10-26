@@ -62,7 +62,6 @@ function BestAI()
                 bestTurn[player] = [1, 1]
                 filter!(x->x≠ [1, 1], posMoves)
             end
-            # TODO
 
             # group the other player's stones in the middle
             bestTurn[otherPlayer] = posMoves[(length(posMoves)) ÷ 2]

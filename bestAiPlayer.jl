@@ -40,24 +40,32 @@ function BestAI()
             # bottom right corner
             if [2*gridOffset+1, gridOffset+1] in posMoves
                 bestTurn[player] = [2*gridOffset+1, gridOffset+1]
+                filter!(x->x≠[2*gridOffset+1, gridOffset+1], posMoves)
             # bottom left corner
             elseif [2*gridOffset+1, 1] in posMoves
                 bestTurn[player] = [2*gridOffset+1, 1]
+                filter!(x->x≠ [2*gridOffset+1, 1], posMoves)
             # middle right
             elseif [gridOffset+1, 2*gridOffset+1] in posMoves
                 bestTurn[player] = [gridOffset+1, 2*gridOffset+1]
+                filter!(x->x≠[gridOffset+1, 2*gridOffset+1], posMoves)
             # middle left
             elseif [gridOffset+1, 1] in posMoves
                 bestTurn[player] = [gridOffset+1, 1]
+                filter!(x->x≠[gridOffset+1, 1], posMoves)
             # top right
             elseif [1, gridOffset+1] in posMoves
                 bestTurn[player] = [1, gridOffset+1]
+                filter!(x->x≠ [1, gridOffset+1], posMoves)
             # top left
             elseif [1, 1] in posMoves
                 bestTurn[player] = [1, 1]
+                filter!(x->x≠ [1, 1], posMoves)
             end
+            # TODO
+
             # group the other player's stones in the middle
-            bestTurn[otherPlayer] = posMoves[(length(posMoves)+1) ÷ 2]
+            bestTurn[otherPlayer] = posMoves[(length(posMoves)) ÷ 2]
             grid.setGridValue!(bestTurn[player][1], bestTurn[player][2], player+1)
             grid.setGridValue!(bestTurn[otherPlayer][1], bestTurn[otherPlayer][2], otherPlayer+1)
         else
